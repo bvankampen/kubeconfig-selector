@@ -55,7 +55,7 @@ func (a *Application) Run() {
 
 			var contextLabel string
 			contextLabel = config.CurrentContext
-			if contextLabel == "default" {
+			if contextLabel == "default" || contextLabel == "local" {
 				contextLabel = fmt.Sprintf("%s [%s]", strings.Replace(config.ShortFilename, ".yaml", "", -1), config.CurrentContext)
 			}
 

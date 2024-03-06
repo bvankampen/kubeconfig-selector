@@ -18,6 +18,7 @@ var (
 		KubeconfigDir:       "~/.kube",
 		KubeconfigFile:      "config",
 		ExtraKubeconfigDirs: []string{"~/Downloads"},
+		ShowKubeConfig:      true,
 	}
 )
 
@@ -25,6 +26,7 @@ type AppConfig struct {
 	KubeconfigDir       string   `yaml:"kubeconfigDir"`
 	KubeconfigFile      string   `yaml:"kubeconfigFile"`
 	ExtraKubeconfigDirs []string `yaml:"extraKubeconfigDirs"`
+	ShowKubeConfig      bool     `yaml:"showKubeconfig"`
 }
 
 func loadAppConfig() *AppConfig {

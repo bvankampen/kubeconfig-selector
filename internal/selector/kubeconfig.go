@@ -1,31 +1,38 @@
 package selector
 
 import (
-	"github.com/davecgh/go-spew/spew"
 	"github.com/mitchellh/go-homedir"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-type kubeConfigs struct {
+func loadActiveKubeConfig(dir string, file string) api.Config {
+	dir, _ = homedir.Expand(dir)
+	logrus.Debugf("Load Active kubeConfig from: %s/%s", dir, file)
+	config, err := clientcmd.LoadFromFile(filepath.Join(dir, file))
+	if err != nil {
+		logrus.Fatalf("Error loading kubeConfig %v", err)
+	}
+	return *config
 }
 
-func loadKubeConfig(dir string, file string) {
+func loadKubeConfig(dir string, file string) api.Config {
 	logrus.Debugf("Loading kubeConfig file: %s/%s", dir, file)
-	config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(dir, file))
-
+	config, err := clientcmd.LoadFromFile(filepath.Join(dir, file))
 	if err != nil {
 		logrus.Fatalf("Error loading KubeConfig %v", err)
 	}
-	spew.Dump(config.String())
+	return *config
 }
 
-func loadKubeConfigsFromDirectory(dir string) {
+func loadKubeConfigsFromDirectory(dir string) []api.Config {
+	var apiConfigs []api.Config
 	dir, _ = homedir.Expand(dir)
-	logrus.Debugf("Seaching directory: %s", dir)
+	logrus.Debugf("Searching directory: %s", dir)
 	files, err := os.ReadDir(dir)
 	if err != nil {
 		logrus.Fatalf("Error reading directory: %s (%v)", dir, err)
@@ -34,22 +41,22 @@ func loadKubeConfigsFromDirectory(dir string) {
 		if !file.IsDir() {
 			if strings.HasSuffix(file.Name(), ".yaml") {
 				logrus.Debugf("Found file: %s", file.Name())
-				loadKubeConfig(dir, file.Name())
+				apiConfigs = append(apiConfigs, loadKubeConfig(dir, file.Name()))
 			}
 		}
-
 	}
+	return apiConfigs
 }
 
-func loadKubeConfigs(appconfig *AppConfig) *kubeConfigs {
-
-	loadKubeConfigsFromDirectory(appconfig.KubeconfigDir)
-
+func loadKubeConfigs(appconfig *AppConfig) ([]api.Config, api.Config) {
+	apiConfigs := loadKubeConfigsFromDirectory(appconfig.KubeconfigDir)
 	for _, dir := range appconfig.ExtraKubeconfigDirs {
-		loadKubeConfigsFromDirectory(dir)
+		apiConfigs = append(apiConfigs, loadKubeConfigsFromDirectory(dir)...)
 	}
 
-	return &kubeConfigs{}
+	activeConfig := loadActiveKubeConfig(appconfig.KubeconfigDir, appconfig.KubeconfigFile)
+
+	return apiConfigs, activeConfig
 }
 
 //type KubeConfig struct {

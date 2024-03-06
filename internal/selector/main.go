@@ -1,28 +1,54 @@
 package selector
 
-import "context"
+import (
+	"context"
+	"github.com/rivo/tview"
+	"k8s.io/client-go/tools/clientcmd/api"
+)
+
+type TableListItem struct {
+	Field string
+	Value string
+}
+
+type TableList struct {
+	Rows []TableListItem
+}
 
 type Selector struct {
-	ctx         context.Context
-	appConfig   AppConfig
-	kubeConfigs kubeConfigs
+	ctx          context.Context
+	appConfig    AppConfig
+	kubeConfigs  []api.Config
+	activeConfig api.Config
+	app          *tview.Application
+	flex         *tview.Flex
+	pages        *tview.Pages
+	list         *tview.List
+	table        *tview.Table
+	tableRow     int
+	tableColumn  int
+	tableList    []TableList
 }
 
 func New(ctx context.Context) (*Selector, error) {
 
 	appconfig := loadAppConfig()
-	kubeconfigs := loadKubeConfigs(appconfig)
+	kubeconfigs, activeconfig := loadKubeConfigs(appconfig)
 
 	return &Selector{
-		ctx:         ctx,
-		appConfig:   *appconfig,
-		kubeConfigs: *kubeconfigs,
+		ctx:          ctx,
+		appConfig:    *appconfig,
+		kubeConfigs:  kubeconfigs,
+		activeConfig: activeconfig,
 	}, nil
 
 }
 
-func (a *Selector) Run() error {
+func (s *Selector) Run() error {
+	s.selectKubeconfig()
+
 	return nil
+
 }
 
 //import (

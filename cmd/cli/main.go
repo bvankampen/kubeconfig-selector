@@ -39,7 +39,7 @@ func main() {
 
 func run(c *cli.Context) {
 	ctx := context.Background()
-	s, err := selector.New(ctx)
+	s, err := selector.New(ctx, c.GlobalBool("debug"))
 	if err != nil {
 		logrus.Fatal(err)
 	}

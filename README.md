@@ -23,3 +23,15 @@ GLOBAL OPTIONS:
 `make`
 ### Install:
 `make install`
+
+### Config:
+
+`~/.config/ks.conf`
+
+```
+kubeconfigDir: ~/.kube
+kubeconfigFile: config
+extraKubeconfigDirs:
+    - ~/Downloads
+showKubeconfig: true
+```

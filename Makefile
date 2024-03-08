@@ -2,9 +2,12 @@
 COMMIT_ID=$(shell git rev-parse --short HEAD)
 VERSION=$(shell cat VERSION)
 
-NAME=cluster
+NAME=ks
 
 all: clean build
+
+debug:
+	@go run cmd/cli/main.go --debug
 
 run:
 	@go run cmd/cli/main.go
@@ -24,4 +27,4 @@ install: clean build
 	@echo ">> Installing $(NAME) in $(GOPATH)/bin..."
 	@cp bin/$(NAME) $(GOPATH)/bin
 
-.PHONY: all clean build install run
+.PHONY: all clean build install run debug

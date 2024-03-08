@@ -1,12 +1,19 @@
 package selector
 
 import (
-	"context"
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/mitchellh/go-homedir"
 	"github.com/rivo/tview"
 	"github.com/sirupsen/logrus"
+	"github.com/urfave/cli"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
-	"strconv"
+	"path/filepath"
+	// "github.com/davecgh/go-spew/spew"
 )
 
 type TableListItem struct {
@@ -22,7 +29,7 @@ type ConfigList struct {
 }
 
 type Selector struct {
-	ctx          context.Context
+	ctx          *cli.Context
 	appConfig    AppConfig
 	kubeConfigs  []api.Config
 	activeConfig api.Config
@@ -31,29 +38,30 @@ type Selector struct {
 	table        *tview.Table
 	configView   *tview.TextView
 	debugView    *tview.TextView
+	helpView     *tview.TextView
 	tableRow     int
 	tableColumn  int
 	configList   []ConfigList
 	debug        bool
 }
 
-func New(ctx context.Context, debug bool) (*Selector, error) {
+func New(ctx cli.Context) (*Selector, error) {
 
 	appconfig := loadAppConfig()
 	kubeconfigs, activeconfig := loadKubeConfigs(appconfig)
 
 	return &Selector{
-		ctx:          ctx,
+		ctx:          &ctx,
 		appConfig:    *appconfig,
 		kubeConfigs:  kubeconfigs,
 		activeConfig: activeconfig,
-		debug:        debug,
+		debug:        ctx.GlobalBool("debug"),
 	}, nil
 
 }
 
 func (s *Selector) addtoTable(field string, value string) {
-	s.table.SetCell(s.tableRow, s.tableColumn, tview.NewTableCell(field))
+	s.table.SetCell(s.tableRow, s.tableColumn, tview.NewTableCell(field).SetTextColor(tcell.ColorOrange))
 	s.tableColumn += 1
 	s.table.SetCell(s.tableRow, s.tableColumn, tview.NewTableCell(value))
 	s.tableRow += 1
@@ -83,18 +91,12 @@ func (s *Selector) printDebug(str string, addToText bool) {
 func (s *Selector) updateScreen(index int) {
 	s.tableRow = 0
 	s.tableColumn = 0
-	if index < len(s.configList) {
-		for _, item := range s.configList[index].Rows {
-			s.addtoTable(item.Field, item.Value)
-		}
-
-		configBytes, _ := clientcmd.Write(s.configList[index].Config)
-		s.configView.SetText(string(configBytes))
-
-	} else {
-		s.table.Clear()
-		s.configView.Clear()
+	for _, item := range s.configList[index].Rows {
+		s.addtoTable(item.Field, item.Value)
 	}
+
+	configBytes, _ := clientcmd.Write(s.configList[index].RedactedConfig)
+	s.configView.SetText(string(configBytes))
 }
 
 func (s *Selector) createContextList() {
@@ -102,72 +104,153 @@ func (s *Selector) createContextList() {
 	index := 0
 	currentIndex := 0
 	s.list.ShowSecondaryText(false)
-	s.list.SetBorder(true).SetTitle("Context")
+	s.list.SetBorder(true).SetTitle("Context").SetBorderColor(tcell.ColorBlue)
 	s.list.SetHighlightFullLine(true)
 	for _, config := range s.kubeConfigs {
-		var tableList ConfigList
-		for _, configContext := range config.Contexts {
-
+		for name, configContext := range config.Contexts {
+			var tableList ConfigList
+			s.addtoTableList(&tableList, "Context", name)
 			s.addtoTableList(&tableList, "Cluster", configContext.Cluster)
+			s.addtoTableList(&tableList, "User", configContext.AuthInfo)
+			s.addtoTableList(&tableList, "Server", config.Clusters[configContext.Cluster].Server)
 			s.addtoTableList(&tableList, "File", configContext.LocationOfOrigin)
-			s.list.AddItem(configContext.Cluster, "", 0, func() {
-				// insert select kubeconfig code
-			})
+
+			kubeDir, _ := homedir.Expand(s.appConfig.KubeconfigDir)
+
+			var star rune
+			star = 0
+			if !strings.HasPrefix(configContext.LocationOfOrigin, kubeDir) {
+				star = '*'
+			}
+
+			s.list.AddItem(name, "", star, nil)
 			tableList.Context = configContext
 			tableList.Config = *config.DeepCopy()
 			tableList.RedactedConfig = redactConfig(*config.DeepCopy())
-		}
-		s.configList = append(s.configList, tableList)
-		configHash := getHash(config)
+			s.configList = append(s.configList, tableList)
+			configHash := getHash(config)
 
-		s.printDebug("c:"+activeConfigHash, true)
-		s.printDebug(strconv.Itoa(index)+":"+configHash, true)
-
-		if configHash == activeConfigHash {
-			currentIndex = index
+			if configHash == activeConfigHash {
+				currentIndex = index
+			}
+			index++
 		}
-		s.printDebug("currentIndex: "+strconv.Itoa(currentIndex), true)
-		index++
 	}
-	s.list.AddItem("Quit", "", 0, func() { s.app.Stop() })
 
 	s.list.SetChangedFunc(func(index int, mainText string, secondayText string, shortcut rune) {
-		s.updateScreen(currentIndex)
+		s.updateScreen(index)
 	})
 
-	//s.list.SetCurrentItem(index)
+	s.list.SetSelectedFunc(func(index int, mainText string, secondayText string, shortcut rune) {
+		saveKubeConfig(s.configList[index].Config.DeepCopy(), mainText, s.appConfig.KubeconfigDir, s.appConfig.KubeconfigFile)
+		s.app.Stop()
+	})
 
 	s.updateScreen(0)
+	s.list.SetCurrentItem(currentIndex)
 
 }
 
-func (s *Selector) Run() error {
-	s.app = tview.NewApplication()
+func (s *Selector) createHelpView() {
+	s.helpView.SetBorder(false)
+	// s.helpView.SetRegions(true)
+	s.helpView.SetDynamicColors(true)
+	helpText := "[yellow]q:[white] Quit " +
+		"[yellow]<enter>:[white] Use Kubeconfig " +
+		"[yellow]m:[white] Move Kubeconfig to " + s.appConfig.KubeconfigDir + " and use it " +
+		"[yellow]k:[white] Toggle Kubeconfig " +
+		"[yellow](*):[white] File not in " + s.appConfig.KubeconfigDir
+	s.helpView.SetText(helpText)
+}
 
+func (s *Selector) setupPages() *tview.Pages {
 	s.list = tview.NewList()
 	s.configView = tview.NewTextView()
 	s.debugView = tview.NewTextView()
 	s.table = tview.NewTable()
+	s.helpView = tview.NewTextView()
 
 	s.table.SetBorder(true).SetTitle("Cluster")
 	s.configView.SetBorder(true).SetTitle("Kubeconfig")
 	s.debugView.SetBorder(true).SetTitle("Debug")
 
 	s.createContextList()
+	s.createHelpView()
 
-	flexSub := tview.NewFlex().SetDirection(tview.FlexRow)
-	flexSub.AddItem(s.table, 0, 1, false)
+	title := tview.NewTextView()
+	title.SetBackgroundColor(tcell.ColorDarkCyan)
+	title.SetTextColor(tcell.ColorBlack)
+	title.SetText(fmt.Sprintf(" Kubeconfig Selector %s https://github.com/bvankampen/kubeconfig-selector", s.ctx.App.Version))
+
+	flexViews := tview.NewFlex().SetDirection(tview.FlexRow)
+	tableSize := 0
 	if s.appConfig.ShowKubeConfig {
-		flexSub.AddItem(s.configView, 0, 2, false)
+		tableSize = 7
+	}
+	flexViews.AddItem(s.table, tableSize, 1, false)
+	if s.appConfig.ShowKubeConfig {
+		flexViews.AddItem(s.configView, 0, 2, false)
 	}
 	if s.debug {
-		flexSub.AddItem(s.debugView, 0, 3, false)
+		flexViews.AddItem(s.debugView, 0, 3, false)
 	}
 	flexMain := tview.NewFlex()
 	flexMain.AddItem(s.list, 0, 1, true)
-	flexMain.AddItem(flexSub, 0, 2, false)
+	flexMain.AddItem(flexViews, 0, 2, false)
 
-	pages := tview.NewPages().AddPage("selectorPage", flexMain, true, true)
+	flexApp := tview.NewFlex().SetDirection(tview.FlexRow)
+	flexApp.AddItem(title, 1, 1, false)
+	flexApp.AddItem(flexMain, 0, 1, true)
+	flexApp.AddItem(s.helpView, 1, 1, false)
+
+	pages := tview.NewPages().AddPage("selectorPage", flexApp, true, true)
+
+	return pages
+
+}
+
+func (s *Selector) Run() error {
+	s.app = tview.NewApplication()
+	s.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Rune() == 'q' {
+			s.app.Stop()
+		}
+		if event.Rune() == 'k' {
+			if s.appConfig.ShowKubeConfig {
+				s.appConfig.ShowKubeConfig = false
+			} else {
+				s.appConfig.ShowKubeConfig = true
+			}
+			pages := s.setupPages()
+			s.app.SetRoot(pages, true)
+		}
+		if event.Rune() == 'd' {
+			if s.debug {
+				s.debug = false
+			} else {
+				s.debug = true
+			}
+			pages := s.setupPages()
+			s.app.SetRoot(pages, true)
+		}
+		if event.Rune() == 'm' {
+			index := s.list.GetCurrentItem()
+			config := s.configList[index].Config
+			context, _ := s.list.GetItemText(index)
+			saveKubeConfig(config.DeepCopy(), context, s.appConfig.KubeconfigDir, s.appConfig.KubeconfigFile)
+			orgKubeConfig := config.Contexts[context].LocationOfOrigin
+			filename := filepath.Base(orgKubeConfig)
+			dir, _ := homedir.Expand(s.appConfig.KubeconfigDir)
+			err := os.Rename(orgKubeConfig, filepath.Join(dir, filename))
+			if err != nil {
+				logrus.Errorf("Unable to move file %v", err)
+			}
+			os.Chmod(filepath.Join(dir, filename), 0600)
+			s.app.Stop()
+		}
+		return event
+	})
+	pages := s.setupPages()
 	err := s.app.SetRoot(pages, true).Run()
 	if err != nil {
 		logrus.Panicf("Error: %v", err)

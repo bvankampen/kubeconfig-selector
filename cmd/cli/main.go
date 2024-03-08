@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"github.com/bvankampen/kubeconfig-selector/internal/selector"
 	"github.com/sirupsen/logrus"
@@ -10,8 +9,8 @@ import (
 )
 
 var (
-	Version  = "0"
-	CommitId = "0"
+	Version  = "0.0"
+	CommitId = "dev"
 )
 
 func main() {
@@ -37,9 +36,8 @@ func main() {
 	}
 }
 
-func run(c *cli.Context) {
-	ctx := context.Background()
-	s, err := selector.New(ctx, c.GlobalBool("debug"))
+func run(ctx *cli.Context) {
+	s, err := selector.New(*ctx)
 	if err != nil {
 		logrus.Fatal(err)
 	}

@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	appConfigFilename = "~/.config/selector.conf"
+	appConfigFilename = "~/.config/ks.conf"
 )
 
 var (

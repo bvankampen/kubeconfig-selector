@@ -2,7 +2,7 @@
 COMMIT_ID=$(shell git rev-parse --short HEAD)
 VERSION=$(shell cat VERSION)
 
-NAME=cluster
+NAME=ks
 
 all: clean build
 

@@ -1,5 +1,7 @@
 ## Simple Kubernetes Kubeconfig Cluster Selector
 
+![Screenshot](docs/ks.png)
+
 ### Usage:
 ```
 NAME:

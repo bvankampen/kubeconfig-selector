@@ -25,6 +25,7 @@ build: clean
 
 install: clean build
 	@echo ">> Installing $(NAME) in $(GOPATH)/bin..."
+	@mkdir -p $(GOPATH)/bin
 	@cp bin/$(NAME) $(GOPATH)/bin
 
 .PHONY: all clean build install run debug

@@ -177,3 +177,8 @@ func (s *Selector) moveKubeconfig() {
 	}
 	os.Chmod(filepath.Join(dir, filename), 0600)
 }
+
+func (s *Selector) reloadScreen() {
+	pages := s.setupPages()
+	s.app.SetRoot(pages, true)
+}

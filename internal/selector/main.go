@@ -22,8 +22,8 @@ func New(ctx cli.Context) (*Selector, error) {
 	}, nil
 
 }
-func (s *Selector) Run() error {
-	s.app = tview.NewApplication()
+
+func (s *Selector) configureInputKeys() {
 	s.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Rune() == 'q' {
 			s.app.Stop()
@@ -34,8 +34,7 @@ func (s *Selector) Run() error {
 			} else {
 				s.appConfig.ShowKubeConfig = true
 			}
-			pages := s.setupPages()
-			s.app.SetRoot(pages, true)
+			s.reloadScreen()
 		}
 		if event.Rune() == 'd' {
 			if s.debug {
@@ -43,8 +42,7 @@ func (s *Selector) Run() error {
 			} else {
 				s.debug = true
 			}
-			pages := s.setupPages()
-			s.app.SetRoot(pages, true)
+			s.reloadScreen()
 		}
 		if event.Rune() == 'm' {
 			s.moveKubeconfig()
@@ -52,6 +50,11 @@ func (s *Selector) Run() error {
 		}
 		return event
 	})
+}
+
+func (s *Selector) Run() error {
+	s.app = tview.NewApplication()
+	s.configureInputKeys()
 	pages := s.setupPages()
 	err := s.app.SetRoot(pages, true).Run()
 	if err != nil {

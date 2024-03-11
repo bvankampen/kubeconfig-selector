@@ -29,6 +29,8 @@ type Selector struct {
 	configView   *tview.TextView
 	debugView    *tview.TextView
 	helpView     *tview.TextView
+	errorMessage *tview.Modal
+	pages        *tview.Pages
 	tableRow     int
 	tableColumn  int
 	configList   []ConfigList

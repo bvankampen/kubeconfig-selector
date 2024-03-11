@@ -55,8 +55,8 @@ func (s *Selector) configureInputKeys() {
 func (s *Selector) Run() error {
 	s.app = tview.NewApplication()
 	s.configureInputKeys()
-	pages := s.setupPages()
-	err := s.app.SetRoot(pages, true).Run()
+	s.setupPages()
+	err := s.app.SetRoot(s.pages, true).Run()
 	if err != nil {
 		logrus.Panicf("Error: %v", err)
 	}

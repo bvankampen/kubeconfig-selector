@@ -8,7 +8,6 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/mitchellh/go-homedir"
 	"github.com/rivo/tview"
-	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/tools/clientcmd"
 	"path/filepath"
 	// "github.com/davecgh/go-spew/spew"
@@ -54,7 +53,6 @@ func (s *Selector) updateScreen(index int) {
 }
 
 func (s *Selector) createContextList() {
-	activeConfigHash := getHash(s.activeConfig)
 	index := 0
 	currentIndex := 0
 	s.list.ShowSecondaryText(false)
@@ -82,9 +80,14 @@ func (s *Selector) createContextList() {
 			tableList.Config = *config.DeepCopy()
 			tableList.RedactedConfig = redactConfig(*config.DeepCopy())
 			s.configList = append(s.configList, tableList)
-			configHash := getHash(config)
 
-			if configHash == activeConfigHash {
+			activeConfigContext := s.activeConfig.Contexts[s.activeConfig.CurrentContext]
+			activeConfigCluster := activeConfigContext.Cluster
+			activeConfigServer := s.activeConfig.Clusters[activeConfigContext.Cluster].Server
+
+			if configContext.Cluster == activeConfigCluster &&
+				config.Clusters[configContext.Cluster].Server == activeConfigServer &&
+				name == s.activeConfig.CurrentContext {
 				currentIndex = index
 			}
 			index++
@@ -96,8 +99,12 @@ func (s *Selector) createContextList() {
 	})
 
 	s.list.SetSelectedFunc(func(index int, mainText string, secondayText string, shortcut rune) {
-		saveKubeConfig(s.configList[index].Config.DeepCopy(), mainText, s.appConfig.KubeconfigDir, s.appConfig.KubeconfigFile)
-		s.app.Stop()
+		err := saveKubeConfig(s.configList[index].Config.DeepCopy(), mainText, s.appConfig.KubeconfigDir, s.appConfig.KubeconfigFile)
+		if err != nil {
+			s.showErrorMessage(err.Error())
+		} else {
+			s.app.Stop()
+		}
 	})
 
 	s.updateScreen(0)
@@ -117,12 +124,28 @@ func (s *Selector) createHelpView() {
 	s.helpView.SetText(helpText)
 }
 
-func (s *Selector) setupPages() *tview.Pages {
+func (s *Selector) createErrorMessage() {
+	s.errorMessage.AddButtons([]string{"Quit"})
+	s.errorMessage.SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+		if buttonLabel == "Quit" {
+			s.app.Stop()
+		}
+	})
+}
+
+func (s *Selector) showErrorMessage(errorMessage string) {
+	s.errorMessage.SetText(errorMessage)
+	s.pages.ShowPage("error")
+	s.app.SetFocus(s.errorMessage)
+}
+
+func (s *Selector) setupPages() {
 	s.list = tview.NewList()
 	s.configView = tview.NewTextView()
 	s.debugView = tview.NewTextView()
 	s.table = tview.NewTable()
 	s.helpView = tview.NewTextView()
+	s.errorMessage = tview.NewModal()
 
 	s.table.SetBorder(true).SetTitle("Cluster")
 	s.configView.SetBorder(true).SetTitle("Kubeconfig")
@@ -130,6 +153,7 @@ func (s *Selector) setupPages() *tview.Pages {
 
 	s.createContextList()
 	s.createHelpView()
+	s.createErrorMessage()
 
 	title := tview.NewTextView()
 	title.SetBackgroundColor(tcell.ColorDarkCyan)
@@ -157,28 +181,30 @@ func (s *Selector) setupPages() *tview.Pages {
 	flexApp.AddItem(flexMain, 0, 1, true)
 	flexApp.AddItem(s.helpView, 1, 1, false)
 
-	pages := tview.NewPages().AddPage("selectorPage", flexApp, true, true)
-
-	return pages
-
+	s.pages = tview.NewPages().AddPage("selectorPage", flexApp, true, true)
+	s.pages.AddPage("error", s.errorMessage, false, false)
 }
 
 func (s *Selector) moveKubeconfig() {
 	index := s.list.GetCurrentItem()
 	config := s.configList[index].Config
 	context, _ := s.list.GetItemText(index)
-	saveKubeConfig(config.DeepCopy(), context, s.appConfig.KubeconfigDir, s.appConfig.KubeconfigFile)
-	orgKubeConfig := config.Contexts[context].LocationOfOrigin
-	filename := filepath.Base(orgKubeConfig)
-	dir, _ := homedir.Expand(s.appConfig.KubeconfigDir)
-	err := os.Rename(orgKubeConfig, filepath.Join(dir, filename))
+	err := saveKubeConfig(config.DeepCopy(), context, s.appConfig.KubeconfigDir, s.appConfig.KubeconfigFile)
 	if err != nil {
-		logrus.Errorf("Unable to move file %v", err)
+		s.showErrorMessage(err.Error())
+	} else {
+		orgKubeConfig := config.Contexts[context].LocationOfOrigin
+		filename := filepath.Base(orgKubeConfig)
+		dir, _ := homedir.Expand(s.appConfig.KubeconfigDir)
+		err := os.Rename(orgKubeConfig, filepath.Join(dir, filename))
+		if err != nil {
+			s.showErrorMessage("Unable to move file " + err.Error())
+		}
+		os.Chmod(filepath.Join(dir, filename), 0600)
 	}
-	os.Chmod(filepath.Join(dir, filename), 0600)
 }
 
 func (s *Selector) reloadScreen() {
-	pages := s.setupPages()
-	s.app.SetRoot(pages, true)
+	s.setupPages()
+	s.app.SetRoot(s.pages, true)
 }

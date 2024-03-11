@@ -1,6 +1,7 @@
 package selector
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,6 +10,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
+)
+
+const (
+	mark = "# Written by rs"
 )
 
 func loadActiveKubeConfig(dir string, file string) api.Config {
@@ -61,14 +66,35 @@ func loadKubeConfigs(appconfig *AppConfig) ([]api.Config, api.Config) {
 	return apiConfigs, activeConfig
 }
 
-func saveKubeConfig(config *api.Config, context string, dir string, file string) {
+func markKubeConfig(path string) {
+	data, _ := os.ReadFile(path)
+	config := mark + "\n" + string(data)
+	os.WriteFile(path, []byte(config), 0600)
+}
+
+func checkMark(path string) bool {
+	_, err := os.Stat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return true
+	}
+	data, _ := os.ReadFile(path)
+	if strings.HasPrefix(string(data), mark) {
+		return true
+	}
+	return false
+}
+
+func saveKubeConfig(config *api.Config, context string, dir string, file string) error {
 	dir, _ = homedir.Expand(dir)
 	path := filepath.Join(dir, file)
-	// path := "/tmp/config"
 	config.CurrentContext = context
-	err := clientcmd.WriteToFile(*config, path)
-	if err != nil {
-		logrus.Fatalf("Unable to write %s Error: %v", path, err)
+	if !checkMark(path) {
+		return errors.New("Kubeconfig (" + path + ") is not managed by rs. Remove/rename this file first.")
 	}
-
+	err := clientcmd.WriteToFile(*config, path)
+	markKubeConfig(path)
+	if err != nil {
+		return errors.New("Unable to write " + path + " Error: " + err.Error())
+	}
+	return nil
 }

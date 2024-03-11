@@ -5,6 +5,7 @@ go 1.21
 toolchain go1.21.7
 
 require (
+	github.com/gdamore/tcell/v2 v2.7.1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/rivo/tview v0.0.0-20240225120200-5605142ca62e
 	github.com/sirupsen/logrus v1.9.3
@@ -17,7 +18,6 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gdamore/encoding v1.0.0 // indirect
-	github.com/gdamore/tcell/v2 v2.7.1 // indirect
 	github.com/go-logr/logr v1.3.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect

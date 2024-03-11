@@ -4,6 +4,10 @@
 
 ![Screenshot](docs/ks.png)
 
+### Requirements:
+
+- go 1.22
+
 ### Usage:
 ```
 NAME:

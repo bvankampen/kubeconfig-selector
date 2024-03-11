@@ -15,18 +15,19 @@ func loadActiveKubeConfig(dir string, file string) api.Config {
 	dir, _ = homedir.Expand(dir)
 	config, err := clientcmd.LoadFromFile(filepath.Join(dir, file))
 	if err != nil {
-		logrus.Errorf("Error loading kubeConfig %v", err)
+		logrus.Debugf("Error loading kubeConfig %s/%s \nError:%v", dir, file, err)
 		return api.Config{}
 	}
 	return *config
 }
 
-func loadKubeConfig(dir string, file string) api.Config {
+func loadKubeConfig(dir string, file string) (api.Config, error) {
 	config, err := clientcmd.LoadFromFile(filepath.Join(dir, file))
 	if err != nil {
-		logrus.Fatalf("Error loading KubeConfig %v", err)
+		logrus.Debugf("Error loading kubeConfig %s/%s \nError:%v", dir, file, err)
+		return api.Config{}, err
 	}
-	return *config
+	return *config, nil
 }
 
 func loadKubeConfigsFromDirectory(dir string) []api.Config {
@@ -39,7 +40,10 @@ func loadKubeConfigsFromDirectory(dir string) []api.Config {
 	for _, file := range files {
 		if !file.IsDir() {
 			if strings.HasSuffix(file.Name(), ".yaml") {
-				apiConfigs = append(apiConfigs, loadKubeConfig(dir, file.Name()))
+				config, err := loadKubeConfig(dir, file.Name())
+				if err == nil {
+					apiConfigs = append(apiConfigs, config)
+				}
 			}
 		}
 	}

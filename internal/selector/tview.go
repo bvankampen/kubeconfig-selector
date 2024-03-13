@@ -5,12 +5,13 @@ import (
 	"os"
 	"strings"
 
+	"path/filepath"
+
+	// "github.com/davecgh/go-spew/spew"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mitchellh/go-homedir"
 	"github.com/rivo/tview"
 	"k8s.io/client-go/tools/clientcmd"
-	"path/filepath"
-	// "github.com/davecgh/go-spew/spew"
 )
 
 func (s *Selector) addtoTable(field string, value string) {
@@ -81,15 +82,18 @@ func (s *Selector) createContextList() {
 			tableList.RedactedConfig = redactConfig(*config.DeepCopy())
 			s.configList = append(s.configList, tableList)
 
-			activeConfigContext := s.activeConfig.Contexts[s.activeConfig.CurrentContext]
-			activeConfigCluster := activeConfigContext.Cluster
-			activeConfigServer := s.activeConfig.Clusters[activeConfigContext.Cluster].Server
+			if s.activeConfig.CurrentContext != "" {
+				activeConfigContext := s.activeConfig.Contexts[s.activeConfig.CurrentContext]
+				activeConfigCluster := activeConfigContext.Cluster
+				activeConfigServer := s.activeConfig.Clusters[activeConfigContext.Cluster].Server
 
-			if configContext.Cluster == activeConfigCluster &&
-				config.Clusters[configContext.Cluster].Server == activeConfigServer &&
-				name == s.activeConfig.CurrentContext {
-				currentIndex = index
+				if configContext.Cluster == activeConfigCluster &&
+					config.Clusters[configContext.Cluster].Server == activeConfigServer &&
+					name == s.activeConfig.CurrentContext {
+					currentIndex = index
+				}
 			}
+
 			index++
 		}
 	}
@@ -114,7 +118,6 @@ func (s *Selector) createContextList() {
 
 func (s *Selector) createHelpView() {
 	s.helpView.SetBorder(false)
-	// s.helpView.SetRegions(true)
 	s.helpView.SetDynamicColors(true)
 	helpText := "[yellow]q:[white] Quit " +
 		"[yellow]<enter>:[white] Use Kubeconfig " +

@@ -1,7 +1,5 @@
 ## Simple Kubernetes Kubeconfig Cluster Selector
 
-**WARNING: this tool overwrites ~/.kube/config, so make a backup first**
-
 ![Screenshot](docs/ks.png)
 
 ### Requirements:

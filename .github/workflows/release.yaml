@@ -23,7 +23,7 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         goos: ${{ matrix.goos }}
         goarch: ${{ matrix.goarch }}
-        goversion: latest
+        goversion: go.mod
         binary_name: "ks"
         build_command: "make build-github"
         extra_files: LICENSE 

@@ -9,7 +9,6 @@ import (
 )
 
 func New(ctx cli.Context) (*Selector, error) {
-
 	appconfig := loadAppConfig()
 	kubeconfigs, activeconfig := loadKubeConfigs(appconfig)
 
@@ -20,33 +19,47 @@ func New(ctx cli.Context) (*Selector, error) {
 		activeConfig: activeconfig,
 		debug:        ctx.GlobalBool("debug"),
 	}, nil
-
 }
 
 func (s *Selector) configureInputKeys() {
 	s.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Rune() == 'q' {
-			s.app.Stop()
+		if s.errorMessage.HasFocus() {
+			return event
 		}
-		if event.Rune() == 'k' {
-			if s.appConfig.ShowKubeConfig {
-				s.appConfig.ShowKubeConfig = false
-			} else {
-				s.appConfig.ShowKubeConfig = true
+
+		frontPageName, _ := s.pages.GetFrontPage()
+		switch frontPageName {
+		case "help":
+			switch event.Rune() {
+			case 'q':
+				s.pages.HidePage("help")
 			}
-			s.reloadScreen()
-		}
-		if event.Rune() == 'd' {
-			if s.debug {
-				s.debug = false
-			} else {
-				s.debug = true
+		case "selectorPage":
+			switch event.Rune() {
+			case 'q':
+				s.app.Stop()
+			case 'k':
+				if s.appConfig.ShowKubeConfig {
+					s.appConfig.ShowKubeConfig = false
+				} else {
+					s.appConfig.ShowKubeConfig = true
+				}
+				s.reloadScreen()
+			case 'd':
+				s.deleteCurrentItem()
+			case 'v':
+				if s.debug {
+					s.debug = false
+				} else {
+					s.debug = true
+				}
+				s.reloadScreen()
+			case 'm':
+				s.moveKubeconfig()
+				s.app.Stop()
+			case '?':
+				s.showHelpMessage()
 			}
-			s.reloadScreen()
-		}
-		if event.Rune() == 'm' {
-			s.moveKubeconfig()
-			s.app.Stop()
 		}
 		return event
 	})

@@ -19,20 +19,22 @@ type ConfigList struct {
 }
 
 type Selector struct {
-	ctx          *cli.Context
-	appConfig    AppConfig
-	kubeConfigs  []api.Config
-	activeConfig api.Config
-	app          *tview.Application
-	list         *tview.List
-	table        *tview.Table
-	configView   *tview.TextView
-	debugView    *tview.TextView
-	helpView     *tview.TextView
-	errorMessage *tview.Modal
-	pages        *tview.Pages
-	tableRow     int
-	tableColumn  int
-	configList   []ConfigList
-	debug        bool
+	ctx           *cli.Context
+	appConfig     AppConfig
+	kubeConfigs   []api.Config
+	activeConfig  api.Config
+	app           *tview.Application
+	list          *tview.List
+	table         *tview.Table
+	configView    *tview.TextView
+	debugView     *tview.TextView
+	helpView      *tview.TextView
+	errorMessage  *tview.Modal
+	deleteMessage *tview.Modal
+	helpMessage   *tview.TextView
+	pages         *tview.Pages
+	tableRow      int
+	tableColumn   int
+	configList    []ConfigList
+	debug         bool
 }

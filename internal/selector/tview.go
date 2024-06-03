@@ -3,9 +3,8 @@ package selector
 import (
 	"fmt"
 	"os"
-	"strings"
-
 	"path/filepath"
+	"strings"
 
 	// "github.com/davecgh/go-spew/spew"
 	"github.com/gdamore/tcell/v2"
@@ -113,7 +112,6 @@ func (s *Selector) createContextList() {
 
 	s.updateScreen(0)
 	s.list.SetCurrentItem(currentIndex)
-
 }
 
 func (s *Selector) createHelpView() {
@@ -122,8 +120,9 @@ func (s *Selector) createHelpView() {
 	helpText := "[yellow]q:[white] Quit " +
 		"[yellow]<enter>:[white] Use Kubeconfig " +
 		"[yellow]m:[white] Move Kubeconfig to " + s.appConfig.KubeconfigDir + " and use it " +
-		"[yellow]k:[white] Toggle Kubeconfig " +
-		"[yellow](*):[white] File not in " + s.appConfig.KubeconfigDir
+		"[yellow]d:[white] Delete file " +
+		"[yellow](*):[white] File not in " + s.appConfig.KubeconfigDir +
+		" [yellow]?:[white]help"
 	s.helpView.SetText(helpText)
 }
 
@@ -134,6 +133,34 @@ func (s *Selector) createErrorMessage() {
 			s.app.Stop()
 		}
 	})
+}
+
+func (s *Selector) createDeleteMessage() {
+	s.deleteMessage.SetText("Are you sure to delete file?")
+	s.deleteMessage.AddButtons([]string{"Yes", "No"})
+	s.deleteMessage.SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+		switch buttonLabel {
+		case "Yes":
+			index := s.list.GetCurrentItem()
+			context := s.configList[index].Context
+			os.Remove(context.LocationOfOrigin)
+			s.list.RemoveItem(index)
+			s.configList = append(s.configList[:index], s.configList[index+1:]...)
+		}
+		s.pages.HidePage("delete")
+	})
+}
+
+func (s *Selector) createHelpMessage() {
+	s.helpMessage.SetBorder(true)
+	s.helpMessage.SetDynamicColors(true)
+	s.helpMessage.SetTitle("Help")
+	s.helpMessage.SetText(s.GetHelpText())
+}
+
+func (s *Selector) showHelpMessage() {
+	s.pages.ShowPage("help")
+	s.app.SetFocus(s.helpMessage)
 }
 
 func (s *Selector) showErrorMessage(errorMessage string) {
@@ -149,6 +176,8 @@ func (s *Selector) setupPages() {
 	s.table = tview.NewTable()
 	s.helpView = tview.NewTextView()
 	s.errorMessage = tview.NewModal()
+	s.helpMessage = tview.NewTextView()
+	s.deleteMessage = tview.NewModal()
 
 	s.table.SetBorder(true).SetTitle("Cluster")
 	s.configView.SetBorder(true).SetTitle("Kubeconfig")
@@ -157,6 +186,8 @@ func (s *Selector) setupPages() {
 	s.createContextList()
 	s.createHelpView()
 	s.createErrorMessage()
+	s.createHelpMessage()
+	s.createDeleteMessage()
 
 	title := tview.NewTextView()
 	title.SetBackgroundColor(tcell.ColorDarkCyan)
@@ -186,6 +217,8 @@ func (s *Selector) setupPages() {
 
 	s.pages = tview.NewPages().AddPage("selectorPage", flexApp, true, true)
 	s.pages.AddPage("error", s.errorMessage, false, false)
+	s.pages.AddPage("help", s.helpMessage, true, false)
+	s.pages.AddPage("delete", s.deleteMessage, false, false)
 }
 
 func (s *Selector) moveKubeconfig() {
@@ -205,6 +238,12 @@ func (s *Selector) moveKubeconfig() {
 		}
 		os.Chmod(filepath.Join(dir, filename), 0600)
 	}
+}
+
+func (s *Selector) deleteCurrentItem() {
+	s.pages.ShowPage("delete")
+
+	s.app.SetFocus(s.deleteMessage)
 }
 
 func (s *Selector) reloadScreen() {

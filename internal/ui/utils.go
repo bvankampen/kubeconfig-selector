@@ -1,12 +1,13 @@
-package selector
+package ui
 
 import (
 	b64 "encoding/base64"
 
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 )
 
-func redactConfig(config api.Config) api.Config {
+func redactConfigToString(config api.Config) string {
 	redacted, _ := b64.StdEncoding.DecodeString("REDACTED")
 	for _, cluster := range config.Clusters {
 		if len(cluster.CertificateAuthorityData) > 0 {
@@ -24,5 +25,6 @@ func redactConfig(config api.Config) api.Config {
 			authInfo.Token = "REDACTED"
 		}
 	}
-	return config
+	configBytes, _ := clientcmd.Write(config)
+	return string(configBytes)
 }

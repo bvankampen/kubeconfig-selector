@@ -1,26 +1,25 @@
-package selector
+package config
 
 import (
 	"errors"
 	"fmt"
+	"os"
+
 	"github.com/mitchellh/go-homedir"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
-	"os"
 )
 
 const (
 	appConfigFilename = "~/.config/ks.conf"
 )
 
-var (
-	defaultConf = AppConfig{
-		KubeconfigDir:       "~/.kube",
-		KubeconfigFile:      "config",
-		ExtraKubeconfigDirs: []string{"~/Downloads"},
-		ShowKubeConfig:      true,
-	}
-)
+var defaultConf = AppConfig{
+	KubeconfigDir:       "~/.kube",
+	KubeconfigFile:      "config",
+	ExtraKubeconfigDirs: []string{"~/Downloads"},
+	ShowKubeConfig:      true,
+}
 
 type AppConfig struct {
 	KubeconfigDir       string   `yaml:"kubeconfigDir"`
@@ -29,7 +28,7 @@ type AppConfig struct {
 	ShowKubeConfig      bool     `yaml:"showKubeconfig"`
 }
 
-func loadAppConfig() *AppConfig {
+func LoadAppConfig() *AppConfig {
 	filename, _ := homedir.Expand(appConfigFilename)
 
 	appconfig := AppConfig{}
@@ -56,5 +55,4 @@ func loadAppConfig() *AppConfig {
 	}
 
 	return &appconfig
-
 }

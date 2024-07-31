@@ -1,7 +1,8 @@
-package selector
+package ui
 
 import (
 	"github.com/bvankampen/kubeconfig-selector/internal/config"
+	"github.com/rivo/tview"
 	"github.com/urfave/cli"
 	"k8s.io/client-go/tools/clientcmd/api"
 )
@@ -18,10 +19,16 @@ type ConfigList struct {
 	Context        *api.Context
 }
 
-type Selector struct {
+type UI struct {
 	ctx          *cli.Context
-	appConfig    config.AppConfig
+	debug        bool
+	app          *tview.Application
+	list         *tview.List
+	views        *tview.Flex
+	pages        *tview.Pages
+	mainFlex     *tview.Flex
 	kubeConfigs  []api.Config
 	activeConfig api.Config
-	debug        bool
+	appConfig    config.AppConfig
+	debugView    *tview.TextView
 }

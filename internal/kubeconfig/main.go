@@ -1,4 +1,4 @@
-package selector
+package kubeconfig
 
 import (
 	"errors"
@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/bvankampen/kubeconfig-selector/internal/config"
 	"github.com/mitchellh/go-homedir"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/tools/clientcmd"
@@ -13,7 +14,7 @@ import (
 )
 
 const (
-	mark = "# Written by rs"
+	MARK = "# Written by rs"
 )
 
 func loadActiveKubeConfig(dir string, file string) api.Config {
@@ -55,7 +56,7 @@ func loadKubeConfigsFromDirectory(dir string) []api.Config {
 	return apiConfigs
 }
 
-func loadKubeConfigs(appconfig *AppConfig) ([]api.Config, api.Config) {
+func LoadKubeConfigs(appconfig *config.AppConfig) ([]api.Config, api.Config) {
 	apiConfigs := loadKubeConfigsFromDirectory(appconfig.KubeconfigDir)
 	for _, dir := range appconfig.ExtraKubeconfigDirs {
 		apiConfigs = append(apiConfigs, loadKubeConfigsFromDirectory(dir)...)
@@ -68,7 +69,7 @@ func loadKubeConfigs(appconfig *AppConfig) ([]api.Config, api.Config) {
 
 func markKubeConfig(path string) {
 	data, _ := os.ReadFile(path)
-	config := mark + "\n" + string(data)
+	config := MARK + "\n" + string(data)
 	os.WriteFile(path, []byte(config), 0600)
 }
 
@@ -78,17 +79,17 @@ func checkMark(path string) bool {
 		return true
 	}
 	data, _ := os.ReadFile(path)
-	if strings.HasPrefix(string(data), mark) {
+	if strings.HasPrefix(string(data), MARK) {
 		return true
 	}
 	return false
 }
 
-func saveKubeConfig(config *api.Config, context string, dir string, file string) error {
+func SaveKubeConfig(config *api.Config, context string, dir string, file string, do_check_mark bool) error {
 	dir, _ = homedir.Expand(dir)
 	path := filepath.Join(dir, file)
 	config.CurrentContext = context
-	if !checkMark(path) {
+	if !checkMark(path) && do_check_mark {
 		return errors.New("Kubeconfig (" + path + ") is not managed by rs. Remove/rename this file first.")
 	}
 	err := clientcmd.WriteToFile(*config, path)
@@ -96,5 +97,23 @@ func saveKubeConfig(config *api.Config, context string, dir string, file string)
 	if err != nil {
 		return errors.New("Unable to write " + path + " Error: " + err.Error())
 	}
+	return nil
+}
+
+func MoveKubeConfig(config *api.Config, context string, kubeConfigDir string) error {
+	originalKubeConfigLocation := config.Contexts[context].LocationOfOrigin
+	filename := filepath.Base(originalKubeConfigLocation)
+	dir, _ := homedir.Expand(kubeConfigDir)
+	err := os.Rename(originalKubeConfigLocation, filepath.Join(dir, filename))
+	if err != nil {
+		return err
+	}
+	os.Chmod(filepath.Join(dir, filename), 0600)
+	return nil
+}
+
+func DeleteKubeConfig(config *api.Config, context string) error {
+	originalKubeConfigLocation := config.Contexts[context].LocationOfOrigin
+	os.Remove(originalKubeConfigLocation)
 	return nil
 }

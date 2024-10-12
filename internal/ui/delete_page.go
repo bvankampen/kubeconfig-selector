@@ -16,9 +16,16 @@ func (ui *UI) deleteCurrentItem() {
 	deleteMessage.SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 		switch buttonLabel {
 		case "Yes":
-			kubeconfig.DeleteKubeConfig(config.DeepCopy(), name)
+			kubeconfig.DeleteKubeConfig(
+				config.DeepCopy(),
+				name,
+				ui.appConfig.KubeconfigDir,
+				ui.appConfig.KubeconfigFile,
+				ui.appConfig.CreateLink,
+			)
 			ui.deleteConfigByIndex(index)
-			ui.list.RemoveItem(index)
+			ui.redrawLists()
+			// ui.list.RemoveItem(index)
 		}
 		ui.pages.
 			HidePage("delete").

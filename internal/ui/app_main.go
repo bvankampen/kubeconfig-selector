@@ -64,6 +64,37 @@ func (ui *UI) createList() int {
 	return currentIndex
 }
 
+func (ui *UI) redrawList() {
+	index := 0
+	ui.list.Clear()
+	for _, config := range ui.kubeConfigs {
+		for name, configContext := range config.Contexts {
+			kubeDir, _ := homedir.Expand(ui.appConfig.KubeconfigDir)
+
+			var star rune
+			star = 0
+			if !strings.HasPrefix(configContext.LocationOfOrigin, kubeDir) {
+				star = '*'
+			}
+
+			ui.list.AddItem(name, "", star, nil)
+
+			if ui.activeConfig.CurrentContext != "" {
+				activeConfigContext := ui.activeConfig.Contexts[ui.activeConfig.CurrentContext]
+				activeConfigCluster := activeConfigContext.Cluster
+				activeConfigServer := ui.activeConfig.Clusters[activeConfigContext.Cluster].Server
+
+				if configContext.Cluster == activeConfigCluster &&
+					config.Clusters[configContext.Cluster].Server == activeConfigServer &&
+					name == ui.activeConfig.CurrentContext {
+				}
+			}
+
+			index++
+		}
+	}
+}
+
 func (ui *UI) selectKubeConfig(index int) {
 	name, config, _ := ui.getConfigByIndex(index)
 	err := kubeconfig.SaveKubeConfig(
@@ -71,7 +102,9 @@ func (ui *UI) selectKubeConfig(index int) {
 		name,
 		ui.appConfig.KubeconfigDir,
 		ui.appConfig.KubeconfigFile,
-		true)
+		true,
+		ui.appConfig.CreateLink,
+		false)
 	if err != nil {
 		ui.ErrorMessage(err.Error())
 	} else {
@@ -84,11 +117,12 @@ func (ui *UI) deleteConfigByIndex(index int) {
 }
 
 func (ui *UI) getConfigByIndex(index int) (string, api.Config, *api.Context) {
-	config := ui.kubeConfigs[index]
-	for name, context := range config.Contexts {
-		currentName, _ := ui.list.GetItemText(index)
-		if name == currentName {
-			return name, config, context
+	contextName, _ := ui.list.GetItemText(index)
+	for _, config := range ui.kubeConfigs {
+		for name, context := range config.Contexts {
+			if name == contextName {
+				return name, config, context
+			}
 		}
 	}
 	return "", api.Config{}, &api.Context{}
@@ -136,7 +170,6 @@ func (ui *UI) createViews(redraw bool) {
 		ui.debugView.SetBorder(true).SetTitle("Debug")
 		ui.views.AddItem(ui.debugView, 10, 3, false)
 	}
-
 }
 
 func (ui *UI) printDebug(debugMessage string) {
@@ -157,7 +190,11 @@ func (ui *UI) createAppMain() {
 
 func (ui *UI) redrawAppMain() {
 	ui.createViews(true)
+}
 
+func (ui *UI) redrawLists() {
+	ui.ReloadKubeConfigs()
+	ui.redrawList()
 }
 
 func (ui *UI) moveKubeConfig() {
@@ -168,6 +205,8 @@ func (ui *UI) moveKubeConfig() {
 		name,
 		ui.appConfig.KubeconfigDir,
 		ui.appConfig.KubeconfigFile,
+		true,
+		ui.appConfig.CreateLink,
 		true)
 	if err != nil {
 		ui.ErrorMessage(err.Error())
@@ -194,6 +233,8 @@ func (ui *UI) renameKubeConfigContext(index int, config api.Config, contextName 
 					newContextName,
 					kubeConfigPath,
 					kubeConfigFilename,
+					false,
+					ui.appConfig.CreateLink,
 					false)
 				if err != nil {
 					ui.ErrorMessage(err.Error())

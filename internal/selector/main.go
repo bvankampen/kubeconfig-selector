@@ -5,19 +5,15 @@ import (
 	"github.com/bvankampen/kubeconfig-selector/internal/ui"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
-	// "github.com/davecgh/go-spew/spew"
 )
 
 func New(ctx cli.Context) (*Selector, error) {
 	appconfig := config.LoadAppConfig()
-	// kubeconfigs, activeconfig := kubeconfig.LoadKubeConfigs(appconfig)
 
 	return &Selector{
 		ctx:       &ctx,
 		appConfig: *appconfig,
-		// kubeConfigs:  kubeconfigs,
-		// activeConfig: activeconfig,
-		debug: ctx.GlobalBool("debug"),
+		debug:     ctx.GlobalBool("debug"),
 	}, nil
 }
 

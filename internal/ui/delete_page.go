@@ -25,7 +25,6 @@ func (ui *UI) deleteCurrentItem() {
 			)
 			ui.deleteConfigByIndex(index)
 			ui.redrawLists()
-			// ui.list.RemoveItem(index)
 		}
 		ui.pages.
 			HidePage("delete").

@@ -56,7 +56,7 @@ func loadKubeConfigsFromDirectory(dir string) []api.Config {
 	return apiConfigs
 }
 
-func LoadKubeConfigs(appconfig *config.AppConfig) ([]api.Config, api.Config) {
+func LoadKubeConfigs(appconfig config.AppConfig) ([]api.Config, api.Config) {
 	apiConfigs := loadKubeConfigsFromDirectory(appconfig.KubeconfigDir)
 	for _, dir := range appconfig.ExtraKubeconfigDirs {
 		apiConfigs = append(apiConfigs, loadKubeConfigsFromDirectory(dir)...)
@@ -85,17 +85,42 @@ func checkMark(path string) bool {
 	return false
 }
 
-func SaveKubeConfig(config *api.Config, context string, dir string, file string, do_check_mark bool) error {
+func SaveKubeConfig(config *api.Config, context string, dir string, file string, doCheckMark bool, createLink bool, isMove bool) error {
 	dir, _ = homedir.Expand(dir)
 	path := filepath.Join(dir, file)
 	config.CurrentContext = context
-	if !checkMark(path) && do_check_mark {
-		return errors.New("Kubeconfig (" + path + ") is not managed by rs. Remove/rename this file first.")
-	}
-	err := clientcmd.WriteToFile(*config, path)
-	markKubeConfig(path)
-	if err != nil {
-		return errors.New("Unable to write " + path + " Error: " + err.Error())
+	if createLink {
+		kubeConfigLocation := config.Contexts[context].LocationOfOrigin
+		err := clientcmd.WriteToFile(*config, kubeConfigLocation)
+		if err != nil {
+			return errors.New("Unable to write " + path + " Error: " + err.Error())
+		}
+		_, err = os.Stat(path)
+		if err == nil {
+			fileInfo, _ := os.Lstat(path)
+			if fileInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
+				os.Remove(path)
+			} else {
+				return errors.New("File: " + path + " is not a symlink, please remove/rename this file first.")
+			}
+		}
+		if isMove {
+			// is kubeconfig is moved, then use new location instead of original location
+			kubeConfigLocation = filepath.Join(dir, filepath.Base(kubeConfigLocation))
+		}
+		err = os.Symlink(kubeConfigLocation, path)
+		if err != nil {
+			return errors.New("Unable to create Symlink " + kubeConfigLocation + "->" + path + "Error: " + err.Error())
+		}
+	} else {
+		if !checkMark(path) && doCheckMark {
+			return errors.New("Kubeconfig (" + path + ") is not managed by rs. Remove/rename this file first.")
+		}
+		err := clientcmd.WriteToFile(*config, path)
+		if err != nil {
+			return errors.New("Unable to write " + path + " Error: " + err.Error())
+		}
+		markKubeConfig(path)
 	}
 	return nil
 }
@@ -112,7 +137,12 @@ func MoveKubeConfig(config *api.Config, context string, kubeConfigDir string) er
 	return nil
 }
 
-func DeleteKubeConfig(config *api.Config, context string) error {
+func DeleteKubeConfig(config *api.Config, context string, dir string, file string, createLink bool) error {
+	if createLink {
+		dir, _ = homedir.Expand(dir)
+		path := filepath.Join(dir, file)
+		os.Remove(path)
+	}
 	originalKubeConfigLocation := config.Contexts[context].LocationOfOrigin
 	os.Remove(originalKubeConfigLocation)
 	return nil

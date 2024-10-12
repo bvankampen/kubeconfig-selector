@@ -7,6 +7,7 @@
 - go 1.22
 
 ### Usage:
+
 ```
 NAME:
    cluster - Select kubeconfig
@@ -15,7 +16,7 @@ USAGE:
    ks [global options] command [command options] [arguments...]
 
 VERSION:
-   2.0 (929de80)
+   1.2 (bf8ed0e)
 
 COMMANDS:
    help, h  Shows a list of commands or help for one command
@@ -25,9 +26,13 @@ GLOBAL OPTIONS:
    --help, -h     show help
    --version, -v  print the version
 ```
+
 ### Build:
+
 `make`
+
 ### Install:
+
 `make install`
 
 ### Config:

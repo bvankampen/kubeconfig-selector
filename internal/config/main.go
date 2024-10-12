@@ -19,6 +19,7 @@ var defaultConf = AppConfig{
 	KubeconfigFile:      "config",
 	ExtraKubeconfigDirs: []string{"~/Downloads"},
 	ShowKubeConfig:      true,
+	CreateLink:          true,
 }
 
 type AppConfig struct {
@@ -26,6 +27,7 @@ type AppConfig struct {
 	KubeconfigFile      string   `yaml:"kubeconfigFile"`
 	ExtraKubeconfigDirs []string `yaml:"extraKubeconfigDirs"`
 	ShowKubeConfig      bool     `yaml:"showKubeconfig"`
+	CreateLink          bool     `yaml:"createLink"`
 }
 
 func LoadAppConfig() *AppConfig {
@@ -53,6 +55,5 @@ func LoadAppConfig() *AppConfig {
 			logrus.Errorf("Unable to load configfile: %v", err)
 		}
 	}
-
 	return &appconfig
 }

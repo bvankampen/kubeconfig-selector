@@ -45,4 +45,5 @@ kubeconfigFile: config
 extraKubeconfigDirs:
     - ~/Downloads
 showKubeconfig: true
+createLink: true
 ```

@@ -117,6 +117,9 @@ func (ui *UI) deleteConfigByIndex(index int) {
 }
 
 func (ui *UI) getConfigByIndex(index int) (string, api.Config, *api.Context) {
+	if ui.list.GetItemCount() == 0 {
+		return "", api.Config{}, &api.Context{}
+	}
 	contextName, _ := ui.list.GetItemText(index)
 	for _, config := range ui.kubeConfigs {
 		for name, context := range config.Contexts {
@@ -133,12 +136,14 @@ func (ui *UI) createInfoTable() *tview.Table {
 	infoTable.SetBorder(true)
 	infoTable.SetTitle("Cluster")
 	name, config, context := ui.getConfigByIndex(ui.list.GetCurrentItem())
-	addtoTable(infoTable, "Context", name)
-	addtoTable(infoTable, "Cluster", context.Cluster)
-	addtoTable(infoTable, "User", context.AuthInfo)
+	if name != "" {
+		addtoTable(infoTable, "Context", name)
+		addtoTable(infoTable, "Cluster", context.Cluster)
+		addtoTable(infoTable, "User", context.AuthInfo)
 
-	addtoTable(infoTable, "Server", config.Clusters[context.Cluster].Server)
-	addtoTable(infoTable, "File", context.LocationOfOrigin)
+		addtoTable(infoTable, "Server", config.Clusters[context.Cluster].Server)
+		addtoTable(infoTable, "File", context.LocationOfOrigin)
+	}
 	return infoTable
 }
 
@@ -186,6 +191,9 @@ func (ui *UI) createAppMain() {
 	ui.mainFlex.AddItem(ui.views, 0, 2, false)
 	ui.list.SetCurrentItem(currentIndex)
 	ui.redrawAppMain()
+	if ui.list.GetItemCount() == 0 {
+		ui.ErrorMessage("No (other) configs found, nothing to choose from.")
+	}
 }
 
 func (ui *UI) redrawAppMain() {

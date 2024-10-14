@@ -17,7 +17,7 @@ const (
 var defaultConf = AppConfig{
 	KubeconfigDir:       "~/.kube",
 	KubeconfigFile:      "config",
-	ExtraKubeconfigDirs: []string{"~/Downloads"},
+	ExtraKubeconfigDirs: []string{},
 	ShowKubeConfig:      true,
 	CreateLink:          true,
 }

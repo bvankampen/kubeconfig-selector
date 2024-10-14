@@ -137,8 +137,8 @@ func MoveKubeConfig(config *api.Config, context string, kubeConfigDir string) er
 	return nil
 }
 
-func DeleteKubeConfig(config *api.Config, context string, dir string, file string, createLink bool) error {
-	if createLink {
+func DeleteKubeConfig(config *api.Config, context string, dir string, file string, createLink bool, activeContext bool) error {
+	if createLink && activeContext {
 		dir, _ = homedir.Expand(dir)
 		path := filepath.Join(dir, file)
 		os.Remove(path)

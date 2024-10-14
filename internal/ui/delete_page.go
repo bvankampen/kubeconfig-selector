@@ -8,6 +8,7 @@ import (
 )
 
 func (ui *UI) deleteCurrentItem() {
+	activeContext := false
 	index := ui.list.GetCurrentItem()
 	name, config, _ := ui.getConfigByIndex(index)
 	deleteMessage := tview.NewModal()
@@ -16,12 +17,16 @@ func (ui *UI) deleteCurrentItem() {
 	deleteMessage.SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 		switch buttonLabel {
 		case "Yes":
+			if ui.activeConfig.CurrentContext == name {
+				activeContext = true
+			}
 			kubeconfig.DeleteKubeConfig(
 				config.DeepCopy(),
 				name,
 				ui.appConfig.KubeconfigDir,
 				ui.appConfig.KubeconfigFile,
 				ui.appConfig.CreateLink,
+				activeContext,
 			)
 			ui.deleteConfigByIndex(index)
 			ui.redrawLists()

@@ -36,16 +36,28 @@ func loadKubeConfig(dir string, file string) (api.Config, error) {
 	return *config, nil
 }
 
+func checkSuffixes(fileName string) bool {
+	suffixes := []string{".yaml", ".config", ".conf"}
+	for _, suffix := range suffixes {
+		if strings.HasSuffix(fileName, suffix) {
+			return true
+		}
+	}
+	return false
+}
+
 func loadKubeConfigsFromDirectory(dir string) []api.Config {
 	var apiConfigs []api.Config
 	dir, _ = homedir.Expand(dir)
 	files, err := os.ReadDir(dir)
 	if err != nil {
-		logrus.Fatalf("Error reading directory: %s (%v)", dir, err)
+		logrus.Errorf("Error reading directory: %s (%v)", dir, err)
+		return nil
 	}
 	for _, file := range files {
 		if !file.IsDir() {
-			if strings.HasSuffix(file.Name(), ".yaml") {
+			// if strings.HasSuffix(file.Name(), ".yaml") {
+			if checkSuffixes(file.Name()) {
 				config, err := loadKubeConfig(dir, file.Name())
 				if err == nil {
 					apiConfigs = append(apiConfigs, config)
@@ -57,6 +69,11 @@ func loadKubeConfigsFromDirectory(dir string) []api.Config {
 }
 
 func LoadKubeConfigs(appconfig config.AppConfig) ([]api.Config, api.Config) {
+	kubeConfigDir, _ := homedir.Expand(appconfig.KubeconfigDir)
+	_, err := os.ReadDir(kubeConfigDir)
+	if err != nil {
+		logrus.Fatalf("Error reading kubeconfig directory: %s (%v)", kubeConfigDir, err)
+	}
 	apiConfigs := loadKubeConfigsFromDirectory(appconfig.KubeconfigDir)
 	for _, dir := range appconfig.ExtraKubeconfigDirs {
 		apiConfigs = append(apiConfigs, loadKubeConfigsFromDirectory(dir)...)

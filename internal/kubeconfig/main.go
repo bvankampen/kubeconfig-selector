@@ -112,6 +112,7 @@ func SaveKubeConfig(config *api.Config, context string, dir string, file string,
 		if err != nil {
 			return errors.New("Unable to write " + path + " Error: " + err.Error())
 		}
+		os.Chmod(kubeConfigLocation, 0600)
 		_, err = os.Stat(path)
 		if err == nil {
 			fileInfo, _ := os.Lstat(path)

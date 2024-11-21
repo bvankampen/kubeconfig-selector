@@ -35,6 +35,8 @@ GLOBAL OPTIONS:
 
 `make install`
 
+or download binary in [releases](https://github.com/bvankampen/kubeconfig-selector/releases).
+
 ### Config:
 
 `~/.config/ks.conf`

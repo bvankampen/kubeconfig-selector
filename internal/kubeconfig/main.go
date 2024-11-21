@@ -143,6 +143,18 @@ func SaveKubeConfig(config *api.Config, context string, dir string, file string,
 	return nil
 }
 
+func SaveKubeConfigFile(config *api.Config, context string, dir string, file string) error {
+	dir, _ = homedir.Expand(dir)
+	path := filepath.Join(dir, file)
+	config.CurrentContext = context
+	err := clientcmd.WriteToFile(*config, path)
+	if err != nil {
+		return errors.New("Unable to write " + path + " Error: " + err.Error())
+	}
+	os.Chmod(path, 0600)
+	return nil
+}
+
 func MoveKubeConfig(config *api.Config, context string, kubeConfigDir string) error {
 	originalKubeConfigLocation := config.Contexts[context].LocationOfOrigin
 	filename := filepath.Base(originalKubeConfigLocation)

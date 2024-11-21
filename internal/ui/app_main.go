@@ -116,7 +116,11 @@ func (ui *UI) selectKubeConfig(index int) {
 }
 
 func (ui *UI) deleteConfigByIndex(index int) {
-	ui.kubeConfigs = append(ui.kubeConfigs[:index], ui.kubeConfigs[index+1:]...)
+	if len(ui.kubeConfigs) == index { // index is last of slice
+		ui.kubeConfigs = ui.kubeConfigs[:len(ui.kubeConfigs)-1]
+	} else {
+		ui.kubeConfigs = append(ui.kubeConfigs[:index], ui.kubeConfigs[index+1:]...)
+	}
 }
 
 func (ui *UI) getConfigByIndex(index int) (string, api.Config, *api.Context) {

@@ -28,7 +28,7 @@ func (ui *UI) renameCurrentItem() {
 		)
 		ui.list.SetItemText(index, newName, "")
 
-		ui.redrawLists()
+		ui.redrawAppMain()
 
 		ui.pages.
 			HidePage("rename").

@@ -28,6 +28,8 @@ func (ui *UI) renameCurrentItem() {
 		)
 		ui.list.SetItemText(index, newName, "")
 
+		ui.redrawLists()
+
 		ui.pages.
 			HidePage("rename").
 			RemovePage("rename")

@@ -66,6 +66,7 @@ func (ui *UI) createList() int {
 
 func (ui *UI) redrawList() {
 	index := 0
+	currentIndex := 0
 	ui.list.Clear()
 	for _, config := range ui.kubeConfigs {
 		for name, configContext := range config.Contexts {
@@ -87,12 +88,14 @@ func (ui *UI) redrawList() {
 				if configContext.Cluster == activeConfigCluster &&
 					config.Clusters[configContext.Cluster].Server == activeConfigServer &&
 					name == ui.activeConfig.CurrentContext {
+					currentIndex = index
 				}
 			}
 
 			index++
 		}
 	}
+	ui.list.SetCurrentItem(currentIndex)
 }
 
 func (ui *UI) selectKubeConfig(index int) {
@@ -236,14 +239,12 @@ func (ui *UI) renameKubeConfigContext(index int, config api.Config, contextName 
 				config.CurrentContext = newContextName
 				delete(config.Contexts, contextName)
 				ui.kubeConfigs[index] = config
-				err := kubeconfig.SaveKubeConfig(
+				err := kubeconfig.SaveKubeConfigFile(
 					config.DeepCopy(),
 					newContextName,
 					kubeConfigPath,
 					kubeConfigFilename,
-					false,
-					ui.appConfig.CreateLink,
-					false)
+				)
 				if err != nil {
 					ui.ErrorMessage(err.Error())
 				}

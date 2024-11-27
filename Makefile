@@ -1,6 +1,5 @@
-
 COMMIT_ID=$(shell git rev-parse --short HEAD)
-VERSION=$(shell cat VERSION)
+VERSION=$(shell git describe --tags --abbrev=0 | sed 's/v//g')
 
 NAME=ks
 

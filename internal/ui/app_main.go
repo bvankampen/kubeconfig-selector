@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -143,13 +142,18 @@ func (ui *UI) createInfoTable() *tview.Table {
 	infoTable.SetBorder(true)
 	infoTable.SetTitle("Cluster")
 	name, config, context := ui.getConfigByIndex(ui.list.GetCurrentItem())
+
 	if name != "" {
 		addtoTable(infoTable, "Context", name)
-		addtoTable(infoTable, "Cluster", context.Cluster)
-		addtoTable(infoTable, "User", context.AuthInfo)
-
-		addtoTable(infoTable, "Server", config.Clusters[context.Cluster].Server)
-		addtoTable(infoTable, "File", context.LocationOfOrigin)
+		cluster, found := config.Clusters[context.Cluster]
+		if found {
+			addtoTable(infoTable, "Cluster", context.Cluster)
+			addtoTable(infoTable, "User", context.AuthInfo)
+			addtoTable(infoTable, "Server", cluster.Server)
+			addtoTable(infoTable, "File", context.LocationOfOrigin)
+		} else {
+			addtoTable(infoTable, "Cluster", "Cluster not found")
+		}
 	}
 	return infoTable
 }
@@ -184,12 +188,12 @@ func (ui *UI) createViews(redraw bool) {
 	}
 }
 
-func (ui *UI) printDebug(debugMessage string) {
-	if ui.debug {
-		debugMessage = fmt.Sprintf("%s%s\n", ui.debugView.GetText(false), debugMessage)
-		ui.debugView.SetText(debugMessage)
-	}
-}
+// func (ui *UI) printDebug(debugMessage string) {
+// 	if ui.debug {
+// 		debugMessage = fmt.Sprintf("%s%s\n", ui.debugView.GetText(false), debugMessage)
+// 		ui.debugView.SetText(debugMessage)
+// 	}
+// }
 
 func (ui *UI) createAppMain() {
 	currentIndex := ui.createList()

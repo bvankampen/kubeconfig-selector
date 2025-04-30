@@ -49,3 +49,7 @@ extraKubeconfigDirs:
 showKubeconfig: true
 createLink: true
 ```
+
+### Note:
+
+If the config option `createLink` is set to `true` and the kubeconfig file `~/.kube/config` exists or it's set to `false` and the config file is not managed by ks, then you need to remove the kubeconfig file first. This is a safety measure to not override existing configurations and this file needs to be removed or rename by hand.

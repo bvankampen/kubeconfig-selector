@@ -10,6 +10,8 @@ import (
 func New(ctx cli.Context) (*Selector, error) {
 	appconfig := config.LoadAppConfig()
 
+	config.WriteAppConfig(appconfig) // Write appconfig to update new values.
+
 	return &Selector{
 		ctx:       &ctx,
 		appConfig: *appconfig,

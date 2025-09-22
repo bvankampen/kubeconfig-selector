@@ -20,6 +20,7 @@ var defaultConf = AppConfig{
 	ExtraKubeconfigDirs: []string{},
 	ShowKubeConfig:      true,
 	CreateLink:          true,
+	RancherKubeconfig:   []string{},
 }
 
 type AppConfig struct {
@@ -28,6 +29,7 @@ type AppConfig struct {
 	ExtraKubeconfigDirs []string `yaml:"extraKubeconfigDirs"`
 	ShowKubeConfig      bool     `yaml:"showKubeconfig"`
 	CreateLink          bool     `yaml:"createLink"`
+	RancherKubeconfig   []string `yaml:"rancherKubeconfig"`
 }
 
 func LoadAppConfig() *AppConfig {
@@ -56,4 +58,14 @@ func LoadAppConfig() *AppConfig {
 		}
 	}
 	return &appconfig
+}
+
+func WriteAppConfig(appconfig *AppConfig) {
+	filename, _ := homedir.Expand(appConfigFilename)
+	logrus.Debugf("Writing configFile: %s", filename)
+	data, _ := yaml.Marshal(appconfig)
+	err := os.WriteFile(filename, data, 0600)
+	if err != nil {
+		logrus.Errorf("Unable to write configfile: %v", err)
+	}
 }

@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/bvankampen/kubeconfig-selector/internal/selector"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
-	"os"
 )
 
 var (
@@ -29,7 +30,8 @@ func main() {
 		&cli.BoolFlag{
 			Name:  "debug",
 			Usage: "Enable debug",
-		}}
+		},
+	}
 	app.Action = run
 	if err := app.Run(os.Args); err != nil {
 		logrus.Fatal(err)

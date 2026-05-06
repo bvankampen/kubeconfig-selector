@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/bvankampen/kubeconfig-selector/internal/config"
 	"github.com/bvankampen/kubeconfig-selector/internal/kubeconfig"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mitchellh/go-homedir"
@@ -235,6 +236,17 @@ func (ui *UI) moveKubeConfig() {
 		ui.ErrorMessage(err.Error())
 	}
 	ui.app.Stop()
+}
+
+func (ui *UI) toggleRancherKubeconfig() {
+	index := ui.list.GetCurrentItem()
+	name, _, _ := ui.getConfigByIndex(index)
+	if containsString(ui.appConfig.RancherKubeconfig, name) {
+		ui.appConfig.RancherKubeconfig = removeString(ui.appConfig.RancherKubeconfig, name)
+	} else {
+		ui.appConfig.RancherKubeconfig = append(ui.appConfig.RancherKubeconfig, name)
+	}
+	config.WriteAppConfig(&ui.appConfig)
 }
 
 func (ui *UI) renameKubeConfigContext(index int, config api.Config, contextName string, newContextName string) {

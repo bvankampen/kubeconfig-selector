@@ -32,6 +32,9 @@ func (ui *UI) configureInput() {
 				ui.deleteCurrentItem()
 			case 'm':
 				ui.moveKubeConfig()
+			case 'x':
+				ui.toggleRancherKubeconfig()
+				return nil
 			case '?':
 				ui.help()
 			}

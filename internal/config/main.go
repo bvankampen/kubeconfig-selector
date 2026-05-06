@@ -37,12 +37,9 @@ func LoadAppConfig() *AppConfig {
 
 	appconfig := AppConfig{}
 
-	logrus.Debugf("Loading configfile: %s", filename)
-
 	if _, err := os.Stat(filename); errors.Is(err, os.ErrNotExist) {
 		appconfig = defaultConf
 		data, _ := yaml.Marshal(appconfig)
-		logrus.Debugf("Configfile doesn't exist creating default configfile")
 		err := os.WriteFile(filename, data, 0o600)
 		if err != nil {
 			logrus.Errorf("Unable to write configfile: %v", err)

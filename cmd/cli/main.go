@@ -22,7 +22,6 @@ func main() {
 	app.Before = func(ctx *cli.Context) error {
 		if ctx.GlobalBool("debug") {
 			logrus.SetLevel(logrus.DebugLevel)
-			logrus.Debugf("Loglevel set to [%v]", logrus.DebugLevel)
 		}
 		return nil
 	}

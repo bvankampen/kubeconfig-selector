@@ -21,7 +21,6 @@ func loadActiveKubeConfig(dir string, file string) api.Config {
 	dir, _ = homedir.Expand(dir)
 	config, err := clientcmd.LoadFromFile(filepath.Join(dir, file))
 	if err != nil {
-		logrus.Debugf("Error loading kubeConfig %s/%s \nError:%v", dir, file, err)
 		return api.Config{}
 	}
 	return *config
@@ -30,7 +29,6 @@ func loadActiveKubeConfig(dir string, file string) api.Config {
 func loadKubeConfig(dir string, file string) (api.Config, error) {
 	config, err := clientcmd.LoadFromFile(filepath.Join(dir, file))
 	if err != nil {
-		logrus.Debugf("Error loading kubeConfig %s/%s \nError:%v", dir, file, err)
 		return api.Config{}, err
 	}
 	return *config, nil
@@ -87,7 +85,7 @@ func LoadKubeConfigs(appconfig config.AppConfig) ([]api.Config, api.Config) {
 func markKubeConfig(path string) {
 	data, _ := os.ReadFile(path)
 	config := MARK + "\n" + string(data)
-	os.WriteFile(path, []byte(config), 0600)
+	os.WriteFile(path, []byte(config), 0o600)
 }
 
 func checkMark(path string) bool {
@@ -112,7 +110,7 @@ func SaveKubeConfig(config *api.Config, context string, dir string, file string,
 		if err != nil {
 			return errors.New("Unable to write " + path + " Error: " + err.Error())
 		}
-		os.Chmod(kubeConfigLocation, 0600)
+		os.Chmod(kubeConfigLocation, 0o600)
 		_, err = os.Stat(path)
 		if err == nil {
 			fileInfo, _ := os.Lstat(path)
@@ -151,7 +149,7 @@ func SaveKubeConfigFile(config *api.Config, context string, dir string, file str
 	if err != nil {
 		return errors.New("Unable to write " + path + " Error: " + err.Error())
 	}
-	os.Chmod(path, 0600)
+	os.Chmod(path, 0o600)
 	return nil
 }
 
@@ -163,7 +161,7 @@ func MoveKubeConfig(config *api.Config, context string, kubeConfigDir string) er
 	if err != nil {
 		return err
 	}
-	os.Chmod(filepath.Join(dir, filename), 0600)
+	os.Chmod(filepath.Join(dir, filename), 0o600)
 	return nil
 }
 

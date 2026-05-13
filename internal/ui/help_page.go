@@ -17,19 +17,6 @@ func (ui *UI) getHelpText() string {
 		"  [yellow]x:[white]       Set kubeconfig as Rancher Manager kubeconfig\n" +
 		"  [yellow](*):[white]     File not in " + ui.appConfig.KubeconfigDir + "\n" +
 		"  [yellow]?:[white]       Help \n" +
-		" \n [green]Changelog: \n\n" +
-		" [red]Version 1.4:[white] \n" +
-		"   - bugfixes \n" +
-		"   - support for multiple configfile extensions (yaml, config, conf) \n" +
-		" [red]Version 1.3:[white] \n" +
-		"   - fixed problems with kubeconfigs with multiple contexts \n" +
-		"   - add option to make symlink to kubeconfig instead of copy \"createLink\" config value (boolean) \n" +
-		" [red]Version 1.2:[white] \n" +
-		"   - Rename a context of a kubeconfig \n" +
-		"   - Big rewrite and refactor of application internals \n" +
-		" [red]Version 1.1:[white] \n" +
-		"   - Delete a kubeconfig file \n" +
-		"   - This Help Screen \n" +
 		"\n\n\n(press q to close this screen)"
 }
 

@@ -26,8 +26,17 @@ func loadActiveKubeConfig(dir string, file string) api.Config {
 	return *config
 }
 
-func loadKubeConfig(dir string, file string) (api.Config, error) {
+func loadKubeConfig(dir string, file string, rancherFix bool) (api.Config, error) {
 	config, err := clientcmd.LoadFromFile(filepath.Join(dir, file))
+
+	// Fix for bug in Rancher 2.14 (+?)
+	// https://github.com/rancher/rancher/issues/55031
+	// https://github.com/rancher/rancher/issues/55034
+	if rancherFix {
+		delete(config.Contexts, "rancher")
+		delete(config.Clusters, "rancher")
+	}
+
 	if err != nil {
 		return api.Config{}, err
 	}
@@ -44,7 +53,7 @@ func checkSuffixes(fileName string) bool {
 	return false
 }
 
-func loadKubeConfigsFromDirectory(dir string) []api.Config {
+func loadKubeConfigsFromDirectory(dir string, rancherFix bool) []api.Config {
 	var apiConfigs []api.Config
 	dir, _ = homedir.Expand(dir)
 	files, err := os.ReadDir(dir)
@@ -56,7 +65,7 @@ func loadKubeConfigsFromDirectory(dir string) []api.Config {
 		if !file.IsDir() {
 			// if strings.HasSuffix(file.Name(), ".yaml") {
 			if checkSuffixes(file.Name()) {
-				config, err := loadKubeConfig(dir, file.Name())
+				config, err := loadKubeConfig(dir, file.Name(), rancherFix)
 				if err == nil {
 					apiConfigs = append(apiConfigs, config)
 				}
@@ -72,9 +81,9 @@ func LoadKubeConfigs(appconfig config.AppConfig) ([]api.Config, api.Config) {
 	if err != nil {
 		logrus.Fatalf("Error reading kubeconfig directory: %s (%v)", kubeConfigDir, err)
 	}
-	apiConfigs := loadKubeConfigsFromDirectory(appconfig.KubeconfigDir)
+	apiConfigs := loadKubeConfigsFromDirectory(appconfig.KubeconfigDir, appconfig.RancherFix)
 	for _, dir := range appconfig.ExtraKubeconfigDirs {
-		apiConfigs = append(apiConfigs, loadKubeConfigsFromDirectory(dir)...)
+		apiConfigs = append(apiConfigs, loadKubeConfigsFromDirectory(dir, appconfig.RancherFix)...)
 	}
 
 	activeConfig := loadActiveKubeConfig(appconfig.KubeconfigDir, appconfig.KubeconfigFile)

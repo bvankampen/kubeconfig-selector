@@ -37,7 +37,6 @@ func (ui *UI) createList() int {
 
 			if containsString(ui.appConfig.RancherKubeconfig, name) {
 				prefixSymbol = 'r'
-
 			}
 
 			ui.list.AddItem(name, "", prefixSymbol, nil)

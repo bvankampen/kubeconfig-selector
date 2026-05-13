@@ -21,6 +21,7 @@ var defaultConf = AppConfig{
 	ShowKubeConfig:      true,
 	CreateLink:          true,
 	RancherKubeconfig:   []string{},
+	RancherFix:          true,
 }
 
 type AppConfig struct {
@@ -30,6 +31,7 @@ type AppConfig struct {
 	ShowKubeConfig      bool     `yaml:"showKubeconfig"`
 	CreateLink          bool     `yaml:"createLink"`
 	RancherKubeconfig   []string `yaml:"rancherKubeconfig"`
+	RancherFix          bool     `yaml:"rancherFix"`
 }
 
 func LoadAppConfig() *AppConfig {

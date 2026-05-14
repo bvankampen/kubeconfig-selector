@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/bvankampen/kubeconfig-selector/internal/config"
 	"github.com/bvankampen/kubeconfig-selector/internal/kubeconfig"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mitchellh/go-homedir"
@@ -28,13 +29,17 @@ func (ui *UI) createList() int {
 		for name, configContext := range config.Contexts {
 			kubeDir, _ := homedir.Expand(ui.appConfig.KubeconfigDir)
 
-			var star rune
-			star = 0
+			var prefixSymbol rune = 0
+
 			if !strings.HasPrefix(configContext.LocationOfOrigin, kubeDir) {
-				star = '*'
+				prefixSymbol = '*'
 			}
 
-			ui.list.AddItem(name, "", star, nil)
+			if containsString(ui.appConfig.RancherKubeconfig, name) {
+				prefixSymbol = 'r'
+			}
+
+			ui.list.AddItem(name, "", prefixSymbol, nil)
 
 			if ui.activeConfig.CurrentContext != "" {
 				activeConfigContext := ui.activeConfig.Contexts[ui.activeConfig.CurrentContext]
@@ -235,6 +240,17 @@ func (ui *UI) moveKubeConfig() {
 		ui.ErrorMessage(err.Error())
 	}
 	ui.app.Stop()
+}
+
+func (ui *UI) toggleRancherKubeconfig() {
+	index := ui.list.GetCurrentItem()
+	name, _, _ := ui.getConfigByIndex(index)
+	if containsString(ui.appConfig.RancherKubeconfig, name) {
+		ui.appConfig.RancherKubeconfig = removeString(ui.appConfig.RancherKubeconfig, name)
+	} else {
+		ui.appConfig.RancherKubeconfig = append(ui.appConfig.RancherKubeconfig, name)
+	}
+	config.WriteAppConfig(&ui.appConfig)
 }
 
 func (ui *UI) renameKubeConfigContext(index int, config api.Config, contextName string, newContextName string) {

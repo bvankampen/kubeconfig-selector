@@ -21,16 +21,23 @@ func loadActiveKubeConfig(dir string, file string) api.Config {
 	dir, _ = homedir.Expand(dir)
 	config, err := clientcmd.LoadFromFile(filepath.Join(dir, file))
 	if err != nil {
-		logrus.Debugf("Error loading kubeConfig %s/%s \nError:%v", dir, file, err)
 		return api.Config{}
 	}
 	return *config
 }
 
-func loadKubeConfig(dir string, file string) (api.Config, error) {
+func loadKubeConfig(dir string, file string, rancherFix bool) (api.Config, error) {
 	config, err := clientcmd.LoadFromFile(filepath.Join(dir, file))
+
+	// Fix for bug in Rancher 2.14 (+?)
+	// https://github.com/rancher/rancher/issues/55031
+	// https://github.com/rancher/rancher/issues/55034
+	if rancherFix {
+		delete(config.Contexts, "rancher")
+		delete(config.Clusters, "rancher")
+	}
+
 	if err != nil {
-		logrus.Debugf("Error loading kubeConfig %s/%s \nError:%v", dir, file, err)
 		return api.Config{}, err
 	}
 	return *config, nil
@@ -46,7 +53,7 @@ func checkSuffixes(fileName string) bool {
 	return false
 }
 
-func loadKubeConfigsFromDirectory(dir string) []api.Config {
+func loadKubeConfigsFromDirectory(dir string, rancherFix bool) []api.Config {
 	var apiConfigs []api.Config
 	dir, _ = homedir.Expand(dir)
 	files, err := os.ReadDir(dir)
@@ -58,7 +65,7 @@ func loadKubeConfigsFromDirectory(dir string) []api.Config {
 		if !file.IsDir() {
 			// if strings.HasSuffix(file.Name(), ".yaml") {
 			if checkSuffixes(file.Name()) {
-				config, err := loadKubeConfig(dir, file.Name())
+				config, err := loadKubeConfig(dir, file.Name(), rancherFix)
 				if err == nil {
 					apiConfigs = append(apiConfigs, config)
 				}
@@ -74,9 +81,9 @@ func LoadKubeConfigs(appconfig config.AppConfig) ([]api.Config, api.Config) {
 	if err != nil {
 		logrus.Fatalf("Error reading kubeconfig directory: %s (%v)", kubeConfigDir, err)
 	}
-	apiConfigs := loadKubeConfigsFromDirectory(appconfig.KubeconfigDir)
+	apiConfigs := loadKubeConfigsFromDirectory(appconfig.KubeconfigDir, appconfig.RancherFix)
 	for _, dir := range appconfig.ExtraKubeconfigDirs {
-		apiConfigs = append(apiConfigs, loadKubeConfigsFromDirectory(dir)...)
+		apiConfigs = append(apiConfigs, loadKubeConfigsFromDirectory(dir, appconfig.RancherFix)...)
 	}
 
 	activeConfig := loadActiveKubeConfig(appconfig.KubeconfigDir, appconfig.KubeconfigFile)
@@ -87,7 +94,7 @@ func LoadKubeConfigs(appconfig config.AppConfig) ([]api.Config, api.Config) {
 func markKubeConfig(path string) {
 	data, _ := os.ReadFile(path)
 	config := MARK + "\n" + string(data)
-	os.WriteFile(path, []byte(config), 0600)
+	os.WriteFile(path, []byte(config), 0o600)
 }
 
 func checkMark(path string) bool {
@@ -112,7 +119,7 @@ func SaveKubeConfig(config *api.Config, context string, dir string, file string,
 		if err != nil {
 			return errors.New("Unable to write " + path + " Error: " + err.Error())
 		}
-		os.Chmod(kubeConfigLocation, 0600)
+		os.Chmod(kubeConfigLocation, 0o600)
 		_, err = os.Stat(path)
 		if err == nil {
 			fileInfo, _ := os.Lstat(path)
@@ -151,7 +158,7 @@ func SaveKubeConfigFile(config *api.Config, context string, dir string, file str
 	if err != nil {
 		return errors.New("Unable to write " + path + " Error: " + err.Error())
 	}
-	os.Chmod(path, 0600)
+	os.Chmod(path, 0o600)
 	return nil
 }
 
@@ -163,7 +170,7 @@ func MoveKubeConfig(config *api.Config, context string, kubeConfigDir string) er
 	if err != nil {
 		return err
 	}
-	os.Chmod(filepath.Join(dir, filename), 0600)
+	os.Chmod(filepath.Join(dir, filename), 0o600)
 	return nil
 }
 

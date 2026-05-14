@@ -4,7 +4,7 @@
 
 ### Requirements:
 
-- go 1.22
+- go 1.25
 
 ### Usage:
 
@@ -48,7 +48,16 @@ extraKubeconfigDirs:
     - ~/Downloads
 showKubeconfig: true
 createLink: true
+rancherFix: false
 ```
+
+### Fix:
+For mitigating these issues:
+- https://github.com/rancher/rancher/issues/55031
+- https://github.com/rancher/rancher/issues/55034
+
+set configuration varialble `rancherFix` to `true`
+
 
 ### Note:
 

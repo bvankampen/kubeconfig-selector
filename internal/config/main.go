@@ -20,6 +20,8 @@ var defaultConf = AppConfig{
 	ExtraKubeconfigDirs: []string{},
 	ShowKubeConfig:      true,
 	CreateLink:          true,
+	RancherKubeconfig:   []string{},
+	RancherFix:          true,
 }
 
 type AppConfig struct {
@@ -28,6 +30,8 @@ type AppConfig struct {
 	ExtraKubeconfigDirs []string `yaml:"extraKubeconfigDirs"`
 	ShowKubeConfig      bool     `yaml:"showKubeconfig"`
 	CreateLink          bool     `yaml:"createLink"`
+	RancherKubeconfig   []string `yaml:"rancherKubeconfig"`
+	RancherFix          bool     `yaml:"rancherFix"`
 }
 
 func LoadAppConfig() *AppConfig {
@@ -35,13 +39,10 @@ func LoadAppConfig() *AppConfig {
 
 	appconfig := AppConfig{}
 
-	logrus.Debugf("Loading configfile: %s", filename)
-
 	if _, err := os.Stat(filename); errors.Is(err, os.ErrNotExist) {
 		appconfig = defaultConf
 		data, _ := yaml.Marshal(appconfig)
-		logrus.Debugf("Configfile doesn't exist creating default configfile")
-		err := os.WriteFile(filename, data, 0600)
+		err := os.WriteFile(filename, data, 0o600)
 		if err != nil {
 			logrus.Errorf("Unable to write configfile: %v", err)
 		}
@@ -56,4 +57,13 @@ func LoadAppConfig() *AppConfig {
 		}
 	}
 	return &appconfig
+}
+
+func WriteAppConfig(appconfig *AppConfig) {
+	filename, _ := homedir.Expand(appConfigFilename)
+	data, _ := yaml.Marshal(appconfig)
+	err := os.WriteFile(filename, data, 0o600)
+	if err != nil {
+		logrus.Errorf("Unable to write configfile: %v", err)
+	}
 }

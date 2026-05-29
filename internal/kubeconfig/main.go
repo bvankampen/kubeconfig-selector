@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	MARK = "# Written by rs"
+	MARK    = "# Written by rs"
+	RANCHER = "rancher"
 )
 
 func loadActiveKubeConfig(dir string, file string) api.Config {
@@ -33,8 +34,10 @@ func loadKubeConfig(dir string, file string, rancherFix bool) (api.Config, error
 	// https://github.com/rancher/rancher/issues/55031
 	// https://github.com/rancher/rancher/issues/55034
 	if rancherFix {
-		delete(config.Contexts, "rancher")
-		delete(config.Clusters, "rancher")
+		if config != nil {
+			delete(config.Contexts, RANCHER)
+			delete(config.Clusters, RANCHER)
+		}
 	}
 
 	if err != nil {
@@ -81,7 +84,7 @@ func LoadKubeConfigs(appconfig config.AppConfig) ([]api.Config, api.Config) {
 	if err != nil {
 		logrus.Fatalf("Error reading kubeconfig directory: %s (%v)", kubeConfigDir, err)
 	}
-	apiConfigs := loadKubeConfigsFromDirectory(appconfig.KubeconfigDir, appconfig.RancherFix)
+	apiConfigs := loadKubeConfigsFromDirectory(appconfig.KubeconfigDir, false)
 	for _, dir := range appconfig.ExtraKubeconfigDirs {
 		apiConfigs = append(apiConfigs, loadKubeConfigsFromDirectory(dir, appconfig.RancherFix)...)
 	}

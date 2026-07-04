@@ -21,14 +21,11 @@ func (ui *UI) renameCurrentItem() {
 	renameForm.AddButton("Rename", func() {
 		newName := renameForm.GetFormItemByLabel("Context").(*tview.InputField).GetText()
 		ui.renameKubeConfigContext(
-			index,
 			*config.DeepCopy(),
 			name,
 			newName,
 		)
-		ui.list.SetItemText(index, newName, "")
-
-		ui.redrawAppMain()
+		ui.redrawLists()
 
 		ui.pages.
 			HidePage("rename").

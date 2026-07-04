@@ -28,21 +28,3 @@ func redactConfigToString(config api.Config) string {
 	configBytes, _ := clientcmd.Write(config)
 	return string(configBytes)
 }
-
-func containsString(slice []string, element string) bool {
-	for _, v := range slice {
-		if v == element {
-			return true
-		}
-	}
-	return false
-}
-
-func removeString(slice []string, element string) []string {
-	for i, v := range slice {
-		if v == element {
-			return append(slice[:i], slice[i+1:]...)
-		}
-	}
-	return slice
-}

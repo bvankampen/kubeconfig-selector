@@ -1,10 +1,12 @@
 package ui
 
 import (
+	"fmt"
+	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
-	"github.com/bvankampen/kubeconfig-selector/internal/config"
 	"github.com/bvankampen/kubeconfig-selector/internal/kubeconfig"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mitchellh/go-homedir"
@@ -18,6 +20,38 @@ func addtoTable(table *tview.Table, field string, value string) {
 	table.SetCell(row, 1, tview.NewTableCell(value))
 }
 
+type listEntry struct {
+	name         string
+	prefixSymbol rune
+}
+
+func (ui *UI) buildSortedEntries() []listEntry {
+	seen := make(map[string]bool)
+	var entries []listEntry
+	kubeDir, _ := homedir.Expand(ui.appConfig.KubeconfigDir)
+
+	for _, cfg := range ui.kubeConfigs {
+		for name, cfgContext := range cfg.Contexts {
+			if seen[name] {
+				continue
+			}
+			seen[name] = true
+
+			var prefixSymbol rune
+			if !strings.HasPrefix(cfgContext.LocationOfOrigin, kubeDir) {
+				prefixSymbol = '*'
+			}
+
+			entries = append(entries, listEntry{name: name, prefixSymbol: prefixSymbol})
+		}
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].name < entries[j].name
+	})
+	return entries
+}
+
 func (ui *UI) createList() int {
 	ui.list = tview.NewList()
 	index := 0
@@ -25,36 +59,28 @@ func (ui *UI) createList() int {
 	ui.list.ShowSecondaryText(false)
 	ui.list.SetBorder(true).SetTitle("Context").SetBorderColor(tcell.ColorBlue)
 	ui.list.SetHighlightFullLine(true)
-	for _, config := range ui.kubeConfigs {
-		for name, configContext := range config.Contexts {
-			kubeDir, _ := homedir.Expand(ui.appConfig.KubeconfigDir)
 
-			var prefixSymbol rune = 0
+	for _, entry := range ui.buildSortedEntries() {
+		ui.list.AddItem(entry.name, "", entry.prefixSymbol, nil)
 
-			if !strings.HasPrefix(configContext.LocationOfOrigin, kubeDir) {
-				prefixSymbol = '*'
-			}
+		if ui.activeConfig.CurrentContext != "" {
+			for _, cfg := range ui.kubeConfigs {
+				if cfgContext, ok := cfg.Contexts[entry.name]; ok {
+					activeConfigContext := ui.activeConfig.Contexts[ui.activeConfig.CurrentContext]
+					activeConfigCluster := activeConfigContext.Cluster
+					activeConfigServer := ui.activeConfig.Clusters[activeConfigContext.Cluster].Server
 
-			if containsString(ui.appConfig.RancherKubeconfig, name) {
-				prefixSymbol = 'r'
-			}
-
-			ui.list.AddItem(name, "", prefixSymbol, nil)
-
-			if ui.activeConfig.CurrentContext != "" {
-				activeConfigContext := ui.activeConfig.Contexts[ui.activeConfig.CurrentContext]
-				activeConfigCluster := activeConfigContext.Cluster
-				activeConfigServer := ui.activeConfig.Clusters[activeConfigContext.Cluster].Server
-
-				if configContext.Cluster == activeConfigCluster &&
-					config.Clusters[configContext.Cluster].Server == activeConfigServer &&
-					name == ui.activeConfig.CurrentContext {
-					currentIndex = index
+					if cfgContext.Cluster == activeConfigCluster &&
+						cfg.Clusters[cfgContext.Cluster].Server == activeConfigServer &&
+						entry.name == ui.activeConfig.CurrentContext {
+						currentIndex = index
+					}
+					break
 				}
 			}
-
-			index++
 		}
+
+		index++
 	}
 
 	ui.list.SetChangedFunc(func(index int, mainText string, secondayText string, shortcut rune) {
@@ -72,32 +98,28 @@ func (ui *UI) redrawList() {
 	index := 0
 	currentIndex := 0
 	ui.list.Clear()
-	for _, config := range ui.kubeConfigs {
-		for name, configContext := range config.Contexts {
-			kubeDir, _ := homedir.Expand(ui.appConfig.KubeconfigDir)
 
-			var star rune
-			star = 0
-			if !strings.HasPrefix(configContext.LocationOfOrigin, kubeDir) {
-				star = '*'
-			}
+	for _, entry := range ui.buildSortedEntries() {
+		ui.list.AddItem(entry.name, "", entry.prefixSymbol, nil)
 
-			ui.list.AddItem(name, "", star, nil)
+		if ui.activeConfig.CurrentContext != "" {
+			for _, cfg := range ui.kubeConfigs {
+				if cfgContext, ok := cfg.Contexts[entry.name]; ok {
+					activeConfigContext := ui.activeConfig.Contexts[ui.activeConfig.CurrentContext]
+					activeConfigCluster := activeConfigContext.Cluster
+					activeConfigServer := ui.activeConfig.Clusters[activeConfigContext.Cluster].Server
 
-			if ui.activeConfig.CurrentContext != "" {
-				activeConfigContext := ui.activeConfig.Contexts[ui.activeConfig.CurrentContext]
-				activeConfigCluster := activeConfigContext.Cluster
-				activeConfigServer := ui.activeConfig.Clusters[activeConfigContext.Cluster].Server
-
-				if configContext.Cluster == activeConfigCluster &&
-					config.Clusters[configContext.Cluster].Server == activeConfigServer &&
-					name == ui.activeConfig.CurrentContext {
-					currentIndex = index
+					if cfgContext.Cluster == activeConfigCluster &&
+						cfg.Clusters[cfgContext.Cluster].Server == activeConfigServer &&
+						entry.name == ui.activeConfig.CurrentContext {
+						currentIndex = index
+					}
+					break
 				}
 			}
-
-			index++
 		}
+
+		index++
 	}
 	ui.list.SetCurrentItem(currentIndex)
 }
@@ -219,6 +241,7 @@ func (ui *UI) redrawAppMain() {
 func (ui *UI) redrawLists() {
 	ui.ReloadKubeConfigs()
 	ui.redrawList()
+	ui.list.SetCurrentItem(0)
 }
 
 func (ui *UI) moveKubeConfig() {
@@ -242,38 +265,54 @@ func (ui *UI) moveKubeConfig() {
 	ui.app.Stop()
 }
 
-func (ui *UI) toggleRancherKubeconfig() {
-	index := ui.list.GetCurrentItem()
-	name, _, _ := ui.getConfigByIndex(index)
-	if containsString(ui.appConfig.RancherKubeconfig, name) {
-		ui.appConfig.RancherKubeconfig = removeString(ui.appConfig.RancherKubeconfig, name)
-	} else {
-		ui.appConfig.RancherKubeconfig = append(ui.appConfig.RancherKubeconfig, name)
+func (ui *UI) renameKubeConfigContext(config api.Config, contextName string, newContextName string) {
+	if contextName == newContextName {
+		return
 	}
-	config.WriteAppConfig(&ui.appConfig)
-}
-
-func (ui *UI) renameKubeConfigContext(index int, config api.Config, contextName string, newContextName string) {
-	if contextName != newContextName {
-		for name, context := range config.Contexts {
-			if name == contextName {
-				kubeConfigPath := filepath.Dir(context.LocationOfOrigin)
-				kubeConfigFilename := filepath.Base(context.LocationOfOrigin)
-				config.Contexts[newContextName] = context.DeepCopy()
-				config.CurrentContext = newContextName
-				delete(config.Contexts, contextName)
-				ui.kubeConfigs[index] = config
-				err := kubeconfig.SaveKubeConfigFile(
-					config.DeepCopy(),
-					newContextName,
-					kubeConfigPath,
-					kubeConfigFilename,
-				)
-				if err != nil {
-					ui.ErrorMessage(err.Error())
-				}
+	for _, cfg := range ui.kubeConfigs {
+		if _, exists := cfg.Contexts[newContextName]; exists {
+			ui.ShowInfoMessage(fmt.Sprintf("Context %q already exists.", newContextName))
+			return
+		}
+	}
+	for name, context := range config.Contexts {
+		if name == contextName {
+			kubeConfigPath := filepath.Dir(context.LocationOfOrigin)
+			kubeConfigFilename := filepath.Base(context.LocationOfOrigin)
+			config.Contexts[newContextName] = context.DeepCopy()
+			config.CurrentContext = newContextName
+			delete(config.Contexts, contextName)
+			err := kubeconfig.SaveKubeConfigFile(
+				config.DeepCopy(),
+				newContextName,
+				kubeConfigPath,
+				kubeConfigFilename,
+			)
+			if err != nil {
+				ui.ErrorMessage(err.Error())
 				return
 			}
+
+			ext := filepath.Ext(kubeConfigFilename)
+			newFilename := newContextName + ext
+			oldPath := filepath.Join(kubeConfigPath, kubeConfigFilename)
+			newPath := filepath.Join(kubeConfigPath, newFilename)
+			err = os.Rename(oldPath, newPath)
+			if err != nil {
+				ui.ErrorMessage(err.Error())
+				return
+			}
+			context.LocationOfOrigin = newPath
+
+			for i, cfg := range ui.kubeConfigs {
+				for n := range cfg.Contexts {
+					if n == contextName {
+						ui.kubeConfigs[i] = config
+						return
+					}
+				}
+			}
+			return
 		}
 	}
 }

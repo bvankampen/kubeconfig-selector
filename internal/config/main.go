@@ -20,7 +20,6 @@ var defaultConf = AppConfig{
 	ExtraKubeconfigDirs: []string{},
 	ShowKubeConfig:      true,
 	CreateLink:          true,
-	RancherKubeconfig:   []string{},
 	RancherFix:          true,
 }
 
@@ -30,7 +29,6 @@ type AppConfig struct {
 	ExtraKubeconfigDirs []string `yaml:"extraKubeconfigDirs"`
 	ShowKubeConfig      bool     `yaml:"showKubeconfig"`
 	CreateLink          bool     `yaml:"createLink"`
-	RancherKubeconfig   []string `yaml:"rancherKubeconfig"`
 	RancherFix          bool     `yaml:"rancherFix"`
 }
 

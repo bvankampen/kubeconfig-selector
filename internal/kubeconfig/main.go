@@ -138,7 +138,11 @@ func SaveKubeConfig(config *api.Config, context string, dir string, file string,
 		}
 		err = os.Symlink(kubeConfigLocation, path)
 		if err != nil {
-			return errors.New("Unable to create Symlink " + kubeConfigLocation + "->" + path + "Error: " + err.Error())
+			os.Remove(path)
+			err = os.Symlink(kubeConfigLocation, path)
+			if err != nil {
+				return errors.New("Unable to create Symlink " + kubeConfigLocation + "->" + path + "Error: " + err.Error())
+			}
 		}
 	} else {
 		if !checkMark(path) && doCheckMark {

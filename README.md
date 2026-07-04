@@ -1,4 +1,4 @@
-## Simple Kubernetes Kubeconfig Cluster Selector
+## kubeconfig-selector
 
 ![Screenshot](docs/ks.png)
 
@@ -10,7 +10,7 @@
 
 ```
 NAME:
-   cluster - Select kubeconfig
+   ks - Select kubeconfig
 
 USAGE:
    ks [global options] command [command options] [arguments...]

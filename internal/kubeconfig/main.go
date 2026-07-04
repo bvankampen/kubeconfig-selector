@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	MARK    = "# Written by rs"
+	MARK    = "# Written by ks"
 	RANCHER = "rancher"
 )
 
@@ -146,7 +146,7 @@ func SaveKubeConfig(config *api.Config, context string, dir string, file string,
 		}
 	} else {
 		if !checkMark(path) && doCheckMark {
-			return errors.New("Kubeconfig (" + path + ") is not managed by rs. Remove/rename this file first.")
+			return errors.New("Kubeconfig (" + path + ") is not managed by ks. Remove/rename this file first.")
 		}
 		err := clientcmd.WriteToFile(*config, path)
 		if err != nil {

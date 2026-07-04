@@ -16,7 +16,7 @@ var (
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "cluster"
+	app.Name = "ks"
 	app.Version = fmt.Sprintf("%s (%s)", Version, CommitId)
 	app.Usage = "Select kubeconfig"
 	app.Before = func(ctx *cli.Context) error {

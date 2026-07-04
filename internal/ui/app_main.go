@@ -40,6 +40,10 @@ func (ui *UI) buildSortedEntries() []listEntry {
 			var prefixSymbol rune
 			if !strings.HasPrefix(cfgContext.LocationOfOrigin, kubeDir) {
 				prefixSymbol = '*'
+			} else if cluster, ok := cfg.Clusters[cfgContext.Cluster]; ok {
+				if strings.HasSuffix(cluster.Server, "local") {
+					prefixSymbol = 'r'
+				}
 			}
 
 			entries = append(entries, listEntry{name: name, prefixSymbol: prefixSymbol})

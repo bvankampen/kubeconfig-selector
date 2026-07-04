@@ -62,6 +62,13 @@ rancherFix: true
 | `F5` | Reload kubeconfigs from disk |
 | `?` | Help |
 
+### Prefixes:
+
+| Symbol | Meaning |
+|--------|---------|
+| `*` | Kubeconfig file not in `~/.kube` |
+| `r` | Rancher Manager context (server ends with `local`) |
+
 ### Rancher downstream clusters:
 
 Press `x` on a Rancher Manager Server to view and download downstream cluster kubeconfigs.

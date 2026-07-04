@@ -13,11 +13,14 @@ func (ui *UI) getHelpText() string {
 		"  [yellow]m:[white]       Move Kubeconfig to " + ui.appConfig.KubeconfigDir + " and use it " + "\n" +
 		"  [yellow]d:[white]       Delete File \n" +
 		"  [yellow]k:[white]       Toggle Kubeconfig \n" +
-		"  [yellow]r:[white]	   Rename Context \n" +
+		"  [yellow]r:[white]       Rename Context \n" +
 		"  [yellow]x:[white]       Show Downstream Clusters \n" +
+		"  [yellow]F5:[white]      Reload Kubeconfigs \n" +
+		"  [yellow]?:[white]       Help \n\n" +
+		"  Prefixes:\n" +
 		"  [yellow](*):[white]     File not in " + ui.appConfig.KubeconfigDir + "\n" +
-		"  [yellow]?:[white]       Help \n" +
-		"\n\n\n(press q to close this screen)"
+		"  [yellow](r):[white]     Rancher Manager context\n" +
+		"\n\n(press q to close this screen)"
 }
 
 func (ui *UI) help() {

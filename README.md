@@ -15,9 +15,6 @@ NAME:
 USAGE:
    ks [global options] command [command options] [arguments...]
 
-VERSION:
-   1.2 (bf8ed0e)
-
 COMMANDS:
    help, h  Shows a list of commands or help for one command
 
@@ -48,16 +45,34 @@ extraKubeconfigDirs:
     - ~/Downloads
 showKubeconfig: true
 createLink: true
-rancherFix: false
+rancherFix: true
 ```
 
+### Keybindings:
+
+| Key | Action |
+|-----|--------|
+| `<enter>` | Use selected kubeconfig |
+| `q` | Quit |
+| `r` | Rename context (also renames the file) |
+| `d` | Delete kubeconfig file |
+| `m` | Move kubeconfig to `~/.kube` and use it |
+| `k` | Toggle kubeconfig preview |
+| `x` | Show downstream clusters (Rancher Manager only) |
+| `F5` | Reload kubeconfigs from disk |
+| `?` | Help |
+
+### Rancher downstream clusters:
+
+Press `x` on a Rancher Manager Server to view and download downstream cluster kubeconfigs.
+
 ### Fix:
+
 For mitigating these issues:
 - https://github.com/rancher/rancher/issues/55031
 - https://github.com/rancher/rancher/issues/55034
 
-set configuration varialble `rancherFix` to `true`
-
+set configuration variable `rancherFix` to `true`
 
 ### Note:
 

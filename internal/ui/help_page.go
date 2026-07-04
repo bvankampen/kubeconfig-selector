@@ -14,7 +14,6 @@ func (ui *UI) getHelpText() string {
 		"  [yellow]d:[white]       Delete File \n" +
 		"  [yellow]k:[white]       Toggle Kubeconfig \n" +
 		"  [yellow]r:[white]	   Rename Context \n" +
-		"  [yellow]x:[white]       Set kubeconfig as Rancher Manager kubeconfig\n" +
 		"  [yellow](*):[white]     File not in " + ui.appConfig.KubeconfigDir + "\n" +
 		"  [yellow]?:[white]       Help \n" +
 		"\n\n\n(press q to close this screen)"

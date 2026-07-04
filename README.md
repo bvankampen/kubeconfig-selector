@@ -2,6 +2,8 @@
 
 ![Screenshot](docs/ks.png)
 
+### Version: v1.7.0
+
 ### Requirements:
 
 - go 1.25
@@ -79,7 +81,10 @@ For mitigating these issues:
 - https://github.com/rancher/rancher/issues/55031
 - https://github.com/rancher/rancher/issues/55034
 
-set configuration variable `rancherFix` to `true`
+set configuration variable `rancherFix` to `true`.
+
+**Note:** `rancherFix` only applies to files in `extraKubeconfigDirs` — kubeconfig files
+in the primary `kubeconfigDir` (`~/.kube`) are not affected.
 
 ### Note:
 

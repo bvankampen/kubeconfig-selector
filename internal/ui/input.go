@@ -14,6 +14,12 @@ func (ui *UI) configureInput() {
 				ui.pages.HidePage("help")
 				ui.pages.RemovePage("help")
 			}
+		case "downstream":
+			switch event.Rune() {
+			case 'q':
+				ui.pages.HidePage("downstream")
+				ui.pages.RemovePage("downstream")
+			}
 		case "main":
 			switch event.Rune() {
 			case 'q':
@@ -32,6 +38,9 @@ func (ui *UI) configureInput() {
 				ui.deleteCurrentItem()
 			case 'm':
 				ui.moveKubeConfig()
+			case 'x':
+				ui.showDownstreamClusters()
+				return nil
 			case '?':
 				ui.help()
 			}

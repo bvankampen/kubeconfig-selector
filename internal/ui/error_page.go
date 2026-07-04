@@ -20,3 +20,16 @@ func (ui *UI) ErrorMessage(errorText string) {
 	errorMessage.SetTitle("Error")
 	ui.pages.AddPage("error", errorMessage, false, true)
 }
+
+func (ui *UI) ShowInfoMessage(infoText string) {
+	msg := tview.NewModal()
+	msg.SetText(fmt.Sprintf("%s", infoText))
+	msg.AddButtons([]string{"OK"})
+	msg.SetBackgroundColor(tcell.ColorRed)
+	msg.SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+		ui.pages.HidePage("info")
+		ui.pages.RemovePage("info")
+	})
+	msg.SetTitle("Error")
+	ui.pages.AddPage("info", msg, false, true)
+}

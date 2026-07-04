@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -267,6 +268,12 @@ func (ui *UI) moveKubeConfig() {
 func (ui *UI) renameKubeConfigContext(config api.Config, contextName string, newContextName string) {
 	if contextName == newContextName {
 		return
+	}
+	for _, cfg := range ui.kubeConfigs {
+		if _, exists := cfg.Contexts[newContextName]; exists {
+			ui.ShowInfoMessage(fmt.Sprintf("Context %q already exists.", newContextName))
+			return
+		}
 	}
 	for name, context := range config.Contexts {
 		if name == contextName {

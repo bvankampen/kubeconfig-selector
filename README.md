@@ -50,6 +50,8 @@ createLink: true
 rancherFix: true
 ```
 
+**Note:** On Windows, `createLink: true` requires either running as Administrator or having Developer Mode enabled, because `os.Symlink` needs elevated privileges. If this is not available, set `createLink: false` to use copy mode instead.
+
 ### Keybindings:
 
 | Key | Action |

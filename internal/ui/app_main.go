@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -262,27 +263,48 @@ func (ui *UI) moveKubeConfig() {
 	ui.app.Stop()
 }
 
-func (ui *UI) renameKubeConfigContext(index int, config api.Config, contextName string, newContextName string) {
-	if contextName != newContextName {
-		for name, context := range config.Contexts {
-			if name == contextName {
-				kubeConfigPath := filepath.Dir(context.LocationOfOrigin)
-				kubeConfigFilename := filepath.Base(context.LocationOfOrigin)
-				config.Contexts[newContextName] = context.DeepCopy()
-				config.CurrentContext = newContextName
-				delete(config.Contexts, contextName)
-				ui.kubeConfigs[index] = config
-				err := kubeconfig.SaveKubeConfigFile(
-					config.DeepCopy(),
-					newContextName,
-					kubeConfigPath,
-					kubeConfigFilename,
-				)
-				if err != nil {
-					ui.ErrorMessage(err.Error())
-				}
+func (ui *UI) renameKubeConfigContext(config api.Config, contextName string, newContextName string) {
+	if contextName == newContextName {
+		return
+	}
+	for name, context := range config.Contexts {
+		if name == contextName {
+			kubeConfigPath := filepath.Dir(context.LocationOfOrigin)
+			kubeConfigFilename := filepath.Base(context.LocationOfOrigin)
+			config.Contexts[newContextName] = context.DeepCopy()
+			config.CurrentContext = newContextName
+			delete(config.Contexts, contextName)
+			err := kubeconfig.SaveKubeConfigFile(
+				config.DeepCopy(),
+				newContextName,
+				kubeConfigPath,
+				kubeConfigFilename,
+			)
+			if err != nil {
+				ui.ErrorMessage(err.Error())
 				return
 			}
+
+			ext := filepath.Ext(kubeConfigFilename)
+			newFilename := newContextName + ext
+			oldPath := filepath.Join(kubeConfigPath, kubeConfigFilename)
+			newPath := filepath.Join(kubeConfigPath, newFilename)
+			err = os.Rename(oldPath, newPath)
+			if err != nil {
+				ui.ErrorMessage(err.Error())
+				return
+			}
+			context.LocationOfOrigin = newPath
+
+			for i, cfg := range ui.kubeConfigs {
+				for n := range cfg.Contexts {
+					if n == contextName {
+						ui.kubeConfigs[i] = config
+						return
+					}
+				}
+			}
+			return
 		}
 	}
 }

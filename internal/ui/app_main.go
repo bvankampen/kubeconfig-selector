@@ -2,6 +2,7 @@ package ui
 
 import (
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/bvankampen/kubeconfig-selector/internal/config"
@@ -18,6 +19,41 @@ func addtoTable(table *tview.Table, field string, value string) {
 	table.SetCell(row, 1, tview.NewTableCell(value))
 }
 
+type listEntry struct {
+	name         string
+	prefixSymbol rune
+}
+
+func (ui *UI) buildSortedEntries() []listEntry {
+	seen := make(map[string]bool)
+	var entries []listEntry
+	kubeDir, _ := homedir.Expand(ui.appConfig.KubeconfigDir)
+
+	for _, cfg := range ui.kubeConfigs {
+		for name, cfgContext := range cfg.Contexts {
+			if seen[name] {
+				continue
+			}
+			seen[name] = true
+
+			var prefixSymbol rune
+			if !strings.HasPrefix(cfgContext.LocationOfOrigin, kubeDir) {
+				prefixSymbol = '*'
+			}
+			if containsString(ui.appConfig.RancherKubeconfig, name) {
+				prefixSymbol = 'r'
+			}
+
+			entries = append(entries, listEntry{name: name, prefixSymbol: prefixSymbol})
+		}
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].name < entries[j].name
+	})
+	return entries
+}
+
 func (ui *UI) createList() int {
 	ui.list = tview.NewList()
 	index := 0
@@ -25,36 +61,28 @@ func (ui *UI) createList() int {
 	ui.list.ShowSecondaryText(false)
 	ui.list.SetBorder(true).SetTitle("Context").SetBorderColor(tcell.ColorBlue)
 	ui.list.SetHighlightFullLine(true)
-	for _, config := range ui.kubeConfigs {
-		for name, configContext := range config.Contexts {
-			kubeDir, _ := homedir.Expand(ui.appConfig.KubeconfigDir)
 
-			var prefixSymbol rune = 0
+	for _, entry := range ui.buildSortedEntries() {
+		ui.list.AddItem(entry.name, "", entry.prefixSymbol, nil)
 
-			if !strings.HasPrefix(configContext.LocationOfOrigin, kubeDir) {
-				prefixSymbol = '*'
-			}
+		if ui.activeConfig.CurrentContext != "" {
+			for _, cfg := range ui.kubeConfigs {
+				if cfgContext, ok := cfg.Contexts[entry.name]; ok {
+					activeConfigContext := ui.activeConfig.Contexts[ui.activeConfig.CurrentContext]
+					activeConfigCluster := activeConfigContext.Cluster
+					activeConfigServer := ui.activeConfig.Clusters[activeConfigContext.Cluster].Server
 
-			if containsString(ui.appConfig.RancherKubeconfig, name) {
-				prefixSymbol = 'r'
-			}
-
-			ui.list.AddItem(name, "", prefixSymbol, nil)
-
-			if ui.activeConfig.CurrentContext != "" {
-				activeConfigContext := ui.activeConfig.Contexts[ui.activeConfig.CurrentContext]
-				activeConfigCluster := activeConfigContext.Cluster
-				activeConfigServer := ui.activeConfig.Clusters[activeConfigContext.Cluster].Server
-
-				if configContext.Cluster == activeConfigCluster &&
-					config.Clusters[configContext.Cluster].Server == activeConfigServer &&
-					name == ui.activeConfig.CurrentContext {
-					currentIndex = index
+					if cfgContext.Cluster == activeConfigCluster &&
+						cfg.Clusters[cfgContext.Cluster].Server == activeConfigServer &&
+						entry.name == ui.activeConfig.CurrentContext {
+						currentIndex = index
+					}
+					break
 				}
 			}
-
-			index++
 		}
+
+		index++
 	}
 
 	ui.list.SetChangedFunc(func(index int, mainText string, secondayText string, shortcut rune) {
@@ -72,32 +100,28 @@ func (ui *UI) redrawList() {
 	index := 0
 	currentIndex := 0
 	ui.list.Clear()
-	for _, config := range ui.kubeConfigs {
-		for name, configContext := range config.Contexts {
-			kubeDir, _ := homedir.Expand(ui.appConfig.KubeconfigDir)
 
-			var star rune
-			star = 0
-			if !strings.HasPrefix(configContext.LocationOfOrigin, kubeDir) {
-				star = '*'
-			}
+	for _, entry := range ui.buildSortedEntries() {
+		ui.list.AddItem(entry.name, "", entry.prefixSymbol, nil)
 
-			ui.list.AddItem(name, "", star, nil)
+		if ui.activeConfig.CurrentContext != "" {
+			for _, cfg := range ui.kubeConfigs {
+				if cfgContext, ok := cfg.Contexts[entry.name]; ok {
+					activeConfigContext := ui.activeConfig.Contexts[ui.activeConfig.CurrentContext]
+					activeConfigCluster := activeConfigContext.Cluster
+					activeConfigServer := ui.activeConfig.Clusters[activeConfigContext.Cluster].Server
 
-			if ui.activeConfig.CurrentContext != "" {
-				activeConfigContext := ui.activeConfig.Contexts[ui.activeConfig.CurrentContext]
-				activeConfigCluster := activeConfigContext.Cluster
-				activeConfigServer := ui.activeConfig.Clusters[activeConfigContext.Cluster].Server
-
-				if configContext.Cluster == activeConfigCluster &&
-					config.Clusters[configContext.Cluster].Server == activeConfigServer &&
-					name == ui.activeConfig.CurrentContext {
-					currentIndex = index
+					if cfgContext.Cluster == activeConfigCluster &&
+						cfg.Clusters[cfgContext.Cluster].Server == activeConfigServer &&
+						entry.name == ui.activeConfig.CurrentContext {
+						currentIndex = index
+					}
+					break
 				}
 			}
-
-			index++
 		}
+
+		index++
 	}
 	ui.list.SetCurrentItem(currentIndex)
 }

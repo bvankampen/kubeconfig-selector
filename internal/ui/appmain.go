@@ -258,6 +258,7 @@ func (ui *UI) redrawLists() {
 		return
 	}
 	ui.redrawList()
+	ui.redrawAppMain()
 }
 
 func (ui *UI) moveKubeConfig() {

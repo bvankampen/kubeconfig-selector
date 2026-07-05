@@ -2,22 +2,11 @@ package ui
 
 import (
 	"github.com/bvankampen/kubeconfig-selector/internal/config"
+	"github.com/bvankampen/kubeconfig-selector/internal/selector"
 	"github.com/rivo/tview"
 	"github.com/urfave/cli/v3"
 	"k8s.io/client-go/tools/clientcmd/api"
 )
-
-type TableListItem struct {
-	Field string
-	Value string
-}
-
-type ConfigList struct {
-	Rows           []TableListItem
-	Config         api.Config
-	RedactedConfig api.Config
-	Context        *api.Context
-}
 
 type UI struct {
 	cmd          *cli.Command
@@ -31,5 +20,5 @@ type UI struct {
 	activeConfig api.Config
 	appConfig    config.AppConfig
 	debugView    *tview.TextView
-	listEntries  []listEntry
+	listEntries  []selector.ListEntry
 }

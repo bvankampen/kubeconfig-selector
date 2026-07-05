@@ -185,9 +185,13 @@ func DeleteKubeConfig(config *api.Config, context string, dir string, file strin
 	if createLink && activeContext {
 		dir, _ = homedir.Expand(dir)
 		path := filepath.Join(dir, file)
-		os.Remove(path)
+		if err := os.Remove(path); err != nil {
+			logrus.Errorf("Error removing symlink %s: %v", path, err)
+		}
 	}
 	originalKubeConfigLocation := config.Contexts[context].LocationOfOrigin
-	os.Remove(originalKubeConfigLocation)
+	if err := os.Remove(originalKubeConfigLocation); err != nil {
+		return err
+	}
 	return nil
 }

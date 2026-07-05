@@ -20,7 +20,7 @@ func (ui *UI) deleteCurrentItem() {
 			if ui.activeConfig.CurrentContext == name {
 				activeContext = true
 			}
-			kubeconfig.DeleteKubeConfig(
+			err := kubeconfig.DeleteKubeConfig(
 				config.DeepCopy(),
 				name,
 				ui.appConfig.KubeconfigDir,
@@ -28,6 +28,10 @@ func (ui *UI) deleteCurrentItem() {
 				ui.appConfig.CreateLink,
 				activeContext,
 			)
+			if err != nil {
+				ui.ErrorMessage(fmt.Sprintf("Error deleting kubeconfig: %v", err))
+				return
+			}
 			ui.deleteConfigByIndex(index)
 			ui.redrawLists()
 		}

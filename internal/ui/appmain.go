@@ -146,10 +146,12 @@ func (ui *UI) selectKubeConfig(index int) {
 }
 
 func (ui *UI) deleteConfigByIndex(index int) {
-	if len(ui.kubeConfigs) == index { // index is last of slice
-		ui.kubeConfigs = ui.kubeConfigs[:len(ui.kubeConfigs)-1]
-	} else {
-		ui.kubeConfigs = append(ui.kubeConfigs[:index], ui.kubeConfigs[index+1:]...)
+	contextName, _ := ui.list.GetItemText(index)
+	for i, config := range ui.kubeConfigs {
+		if _, ok := config.Contexts[contextName]; ok {
+			ui.kubeConfigs = append(ui.kubeConfigs[:i], ui.kubeConfigs[i+1:]...)
+			return
+		}
 	}
 }
 

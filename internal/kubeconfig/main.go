@@ -118,11 +118,23 @@ func SaveKubeConfig(config *api.Config, context string, dir string, file string,
 	config.CurrentContext = context
 	if createLink {
 		kubeConfigLocation := config.Contexts[context].LocationOfOrigin
+
+		if isMove {
+			newPath := filepath.Join(dir, filepath.Base(kubeConfigLocation))
+			err := os.Rename(kubeConfigLocation, newPath)
+			if err != nil {
+				return errors.New("Unable to move " + kubeConfigLocation + " to " + newPath + ": " + err.Error())
+			}
+			os.Chmod(newPath, 0o600)
+			kubeConfigLocation = newPath
+		}
+
 		err := clientcmd.WriteToFile(*config, kubeConfigLocation)
 		if err != nil {
-			return errors.New("Unable to write " + path + " Error: " + err.Error())
+			return errors.New("Unable to write " + kubeConfigLocation + ": " + err.Error())
 		}
 		os.Chmod(kubeConfigLocation, 0o600)
+
 		_, err = os.Stat(path)
 		if err == nil {
 			fileInfo, _ := os.Lstat(path)
@@ -132,16 +144,13 @@ func SaveKubeConfig(config *api.Config, context string, dir string, file string,
 				return errors.New("File: " + path + " is not a symlink, please remove/rename this file first.")
 			}
 		}
-		if isMove {
-			// is kubeconfig is moved, then use new location instead of original location
-			kubeConfigLocation = filepath.Join(dir, filepath.Base(kubeConfigLocation))
-		}
+
 		err = os.Symlink(kubeConfigLocation, path)
 		if err != nil {
 			os.Remove(path)
 			err = os.Symlink(kubeConfigLocation, path)
 			if err != nil {
-				return errors.New("Unable to create Symlink " + kubeConfigLocation + "->" + path + "Error: " + err.Error())
+				return errors.New("Unable to create Symlink " + kubeConfigLocation + " -> " + path + ": " + err.Error())
 			}
 		}
 	} else {

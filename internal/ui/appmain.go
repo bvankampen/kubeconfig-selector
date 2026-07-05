@@ -260,12 +260,9 @@ func (ui *UI) moveKubeConfig() {
 		true)
 	if err != nil {
 		ui.ErrorMessage(err.Error())
+	} else {
+		ui.app.Stop()
 	}
-	err = kubeconfig.MoveKubeConfig(config.DeepCopy(), name, ui.appConfig.KubeconfigDir)
-	if err != nil {
-		ui.ErrorMessage(err.Error())
-	}
-	ui.app.Stop()
 }
 
 func (ui *UI) renameKubeConfigContext(config api.Config, contextName string, newContextName string) {

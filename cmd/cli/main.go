@@ -37,13 +37,10 @@ func main() {
 	}
 }
 
-func run(ctx *cli.Context) {
+func run(ctx *cli.Context) error {
 	s, err := selector.New(*ctx)
 	if err != nil {
-		logrus.Fatal(err)
+		return err
 	}
-	err = s.Run()
-	if err != nil {
-		logrus.Fatal(err)
-	}
+	return s.Run()
 }

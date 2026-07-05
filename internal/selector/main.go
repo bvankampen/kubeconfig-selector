@@ -3,7 +3,6 @@ package selector
 import (
 	"github.com/bvankampen/kubeconfig-selector/internal/config"
 	"github.com/bvankampen/kubeconfig-selector/internal/ui"
-	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
@@ -24,9 +23,5 @@ func (s *Selector) Run() error {
 	if err := ui.Init(s.ctx, s.appConfig, s.debug); err != nil {
 		return err
 	}
-	err := ui.Run()
-	if err != nil {
-		logrus.Panicf("Error: %v", err)
-	}
-	return nil
+	return ui.Run()
 }

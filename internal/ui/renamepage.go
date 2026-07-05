@@ -28,13 +28,13 @@ func (ui *UI) renameCurrentItem() {
 		ui.redrawLists()
 
 		ui.pages.
-			HidePage("rename").
-			RemovePage("rename")
+			HidePage(pageRename).
+			RemovePage(pageRename)
 	})
 	renameForm.AddButton("Cancel", func() {
 		ui.pages.
-			HidePage("rename").
-			RemovePage("rename")
+			HidePage(pageRename).
+			RemovePage(pageRename)
 	})
 
 	// Center renameForm on screen
@@ -42,5 +42,5 @@ func (ui *UI) renameCurrentItem() {
 	x := ((width) / 2) - 20
 	renameForm.SetRect(x, 5, 40, 7)
 
-	ui.pages.AddPage("rename", renameForm, false, true)
+	ui.pages.AddPage(pageRename, renameForm, false, true)
 }

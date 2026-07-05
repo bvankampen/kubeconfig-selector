@@ -18,7 +18,7 @@ func (ui *UI) ErrorMessage(errorText string) {
 		}
 	})
 	errorMessage.SetTitle("Error")
-	ui.pages.AddPage("error", errorMessage, false, true)
+	ui.pages.AddPage(pageError, errorMessage, false, true)
 }
 
 func (ui *UI) ShowInfoMessage(infoText string) {
@@ -27,9 +27,9 @@ func (ui *UI) ShowInfoMessage(infoText string) {
 	msg.AddButtons([]string{"OK"})
 	msg.SetBackgroundColor(tcell.ColorRed)
 	msg.SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-		ui.pages.HidePage("info")
-		ui.pages.RemovePage("info")
+		ui.pages.HidePage(pageInfo)
+		ui.pages.RemovePage(pageInfo)
 	})
 	msg.SetTitle("Error")
-	ui.pages.AddPage("info", msg, false, true)
+	ui.pages.AddPage(pageInfo, msg, false, true)
 }

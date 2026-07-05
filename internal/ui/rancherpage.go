@@ -50,8 +50,8 @@ func (ui *UI) showDownstreamClusters() {
 
 	list.SetSelectedFunc(func(i int, mainText string, secondaryText string, shortcut rune) {
 		if mainText == "Close" {
-			ui.pages.HidePage("downstream")
-			ui.pages.RemovePage("downstream")
+			ui.pages.HidePage(pageDownstream)
+			ui.pages.RemovePage(pageDownstream)
 			return
 		}
 
@@ -69,7 +69,7 @@ func (ui *UI) showDownstreamClusters() {
 	y := (height - listHeight) / 2
 	list.SetRect(x, y, 50, listHeight)
 
-	ui.pages.AddPage("downstream", list, false, true)
+	ui.pages.AddPage(pageDownstream, list, false, true)
 }
 
 func (ui *UI) downloadDownstreamKubeConfig(server, token string, cluster rancher.DownstreamCluster) {
@@ -79,7 +79,7 @@ func (ui *UI) downloadDownstreamKubeConfig(server, token string, cluster rancher
 		return
 	}
 
-	ui.pages.HidePage("downstream")
-	ui.pages.RemovePage("downstream")
+	ui.pages.HidePage(pageDownstream)
+	ui.pages.RemovePage(pageDownstream)
 	ui.redrawLists()
 }

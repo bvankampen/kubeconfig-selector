@@ -25,8 +25,8 @@ func (ui *UI) deleteCurrentItem() {
 			ui.redrawLists()
 		}
 		ui.pages.
-			HidePage("delete").
-			RemovePage("delete")
+			HidePage(pageDelete).
+			RemovePage(pageDelete)
 	})
-	ui.pages.AddPage("delete", deleteMessage, false, true)
+	ui.pages.AddPage(pageDelete, deleteMessage, false, true)
 }

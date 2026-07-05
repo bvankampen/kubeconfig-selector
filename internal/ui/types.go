@@ -8,6 +8,16 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 )
 
+const (
+	pageMain       = "main"
+	pageHelp       = "help"
+	pageDelete     = "delete"
+	pageRename     = "rename"
+	pageError      = "error"
+	pageInfo       = "info"
+	pageDownstream = "downstream"
+)
+
 type UI struct {
 	cmd          *cli.Command
 	debug        bool

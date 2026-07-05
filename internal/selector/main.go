@@ -7,9 +7,14 @@ import (
 )
 
 func New(cmd *cli.Command) (*Selector, error) {
-	appconfig := config.LoadAppConfig()
+	appconfig, err := config.LoadAppConfig()
+	if err != nil {
+		return nil, err
+	}
 
-	config.WriteAppConfig(appconfig) // Write appconfig to update new values.
+	if err := config.WriteAppConfig(appconfig); err != nil {
+		return nil, err
+	}
 
 	return &Selector{
 		cmd:       cmd,

@@ -18,13 +18,13 @@ const (
 	RANCHER = "rancher"
 )
 
-func loadActiveKubeConfig(dir string, file string) api.Config {
+func loadActiveKubeConfig(dir string, file string) (api.Config, error) {
 	dir, _ = homedir.Expand(dir)
 	config, err := clientcmd.LoadFromFile(filepath.Join(dir, file))
 	if err != nil {
-		return api.Config{}
+		return api.Config{}, err
 	}
-	return *config
+	return *config, nil
 }
 
 func loadKubeConfig(dir string, file string, rancherFix bool) (api.Config, error) {
@@ -89,7 +89,10 @@ func LoadKubeConfigs(appconfig config.AppConfig) ([]api.Config, api.Config, erro
 		apiConfigs = append(apiConfigs, loadKubeConfigsFromDirectory(dir, appconfig.RancherFix)...)
 	}
 
-	activeConfig := loadActiveKubeConfig(appconfig.KubeconfigDir, appconfig.KubeconfigFile)
+	activeConfig, err := loadActiveKubeConfig(appconfig.KubeconfigDir, appconfig.KubeconfigFile)
+	if err != nil {
+		return nil, api.Config{}, err
+	}
 
 	return apiConfigs, activeConfig, nil
 }

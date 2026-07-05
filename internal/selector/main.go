@@ -13,10 +13,6 @@ func New(cmd *cli.Command) (*Selector, error) {
 		return nil, err
 	}
 
-	if err := config.WriteAppConfig(appconfig); err != nil {
-		return nil, err
-	}
-
 	kubeConfigs, activeConfig, err := kubeconfig.LoadKubeConfigs(*appconfig)
 	if err != nil {
 		return nil, err

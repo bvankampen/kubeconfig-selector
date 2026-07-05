@@ -3,3 +3,4 @@ ks
 
 dist/
 /.idea/
+.envrc

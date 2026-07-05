@@ -5,13 +5,10 @@ import (
 	"github.com/bvankampen/kubeconfig-selector/internal/kubeconfig"
 	"github.com/rivo/tview"
 	"github.com/urfave/cli/v3"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
-func (ui *UI) Init(cmd *cli.Command, appConfig config.AppConfig, debug bool) error {
-	kubeConfigs, activeConfig, err := kubeconfig.LoadKubeConfigs(appConfig)
-	if err != nil {
-		return err
-	}
+func (ui *UI) Init(cmd *cli.Command, appConfig config.AppConfig, kubeConfigs []api.Config, activeConfig api.Config, debug bool) error {
 	ui.cmd = cmd
 	ui.debug = debug
 	ui.app = tview.NewApplication()

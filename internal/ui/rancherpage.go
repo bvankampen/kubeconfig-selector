@@ -1,21 +1,17 @@
 package ui
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/bvankampen/kubeconfig-selector/internal/rancher"
+	"github.com/bvankampen/kubeconfig-selector/internal/selector"
 	"github.com/gdamore/tcell/v2"
-	"github.com/mitchellh/go-homedir"
 	"github.com/rivo/tview"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 func (ui *UI) showDownstreamClusters() {
 	index := ui.list.GetCurrentItem()
-	_, config, ctx := ui.getConfigByIndex(index)
+	_, config, ctx := selector.GetConfigByIndex(ui.kubeConfigs, ui.listEntries, index)
 
 	server := config.Clusters[ctx.Cluster].Server
 
@@ -77,28 +73,11 @@ func (ui *UI) showDownstreamClusters() {
 }
 
 func (ui *UI) downloadDownstreamKubeConfig(server, token string, cluster rancher.DownstreamCluster) {
-	data, err := rancher.FetchClusterKubeConfig(server, token, cluster.ID)
+	err := selector.DownloadDownstreamKubeConfig(server, token, cluster, ui.appConfig.KubeconfigDir)
 	if err != nil {
 		ui.ErrorMessage(err.Error())
 		return
 	}
-
-	cfg, err := clientcmd.Load(data)
-	if err != nil {
-		ui.ErrorMessage(fmt.Sprintf("Failed to parse kubeconfig for %s: %v", cluster.Name, err))
-		return
-	}
-
-	kubeDir, _ := homedir.Expand(ui.appConfig.KubeconfigDir)
-	filePath := filepath.Join(kubeDir, cluster.Name+".yaml")
-
-	err = clientcmd.WriteToFile(*cfg, filePath)
-	if err != nil {
-		ui.ErrorMessage(fmt.Sprintf("Failed to save kubeconfig: %v", err))
-		return
-	}
-
-	os.Chmod(filePath, 0o600)
 
 	ui.pages.HidePage("downstream")
 	ui.pages.RemovePage("downstream")

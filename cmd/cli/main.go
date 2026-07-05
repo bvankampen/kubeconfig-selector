@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/bvankampen/kubeconfig-selector/internal/selector"
+	"github.com/bvankampen/kubeconfig-selector/internal/ui"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v3"
 )
@@ -44,5 +45,10 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
-	return s.Run()
+
+	var ui ui.UI
+	if err := ui.Init(s.Cmd(), s.AppConfig(), s.KubeConfigs(), s.ActiveConfig(), s.Debug()); err != nil {
+		return err
+	}
+	return ui.Run()
 }

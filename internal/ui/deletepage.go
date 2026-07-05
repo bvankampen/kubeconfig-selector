@@ -3,36 +3,25 @@ package ui
 import (
 	"fmt"
 
-	"github.com/bvankampen/kubeconfig-selector/internal/kubeconfig"
+	"github.com/bvankampen/kubeconfig-selector/internal/selector"
 	"github.com/rivo/tview"
 )
 
 func (ui *UI) deleteCurrentItem() {
-	activeContext := false
 	index := ui.list.GetCurrentItem()
-	name, config, _ := ui.getConfigByIndex(index)
+	name, _, _ := selector.GetConfigByIndex(ui.kubeConfigs, ui.listEntries, index)
 	deleteMessage := tview.NewModal()
 	deleteMessage.SetText(fmt.Sprintf("Do you want to delete kubeconfig file for context: %s?", name))
 	deleteMessage.AddButtons([]string{"Yes", "No"})
 	deleteMessage.SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 		switch buttonLabel {
 		case "Yes":
-			if ui.activeConfig.CurrentContext == name {
-				activeContext = true
-			}
-			err := kubeconfig.DeleteKubeConfig(
-				config.DeepCopy(),
-				name,
-				ui.appConfig.KubeconfigDir,
-				ui.appConfig.KubeconfigFile,
-				ui.appConfig.CreateLink,
-				activeContext,
-			)
+			err := selector.DeleteConfig(ui.kubeConfigs, ui.listEntries, index, ui.appConfig, ui.activeConfig)
 			if err != nil {
 				ui.ErrorMessage(fmt.Sprintf("Error deleting kubeconfig: %v", err))
 				return
 			}
-			ui.deleteConfigByIndex(index)
+			ui.kubeConfigs = selector.DeleteConfigByIndex(ui.kubeConfigs, ui.listEntries, index)
 			ui.redrawLists()
 		}
 		ui.pages.

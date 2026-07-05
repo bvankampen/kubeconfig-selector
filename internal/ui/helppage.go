@@ -30,5 +30,5 @@ func (ui *UI) help() {
 	help.SetBorder(true)
 	help.SetTitle("Help")
 	help.SetText(ui.getHelpText())
-	ui.pages.AddPage("help", help, true, true)
+	ui.pages.AddPage(pageHelp, help, true, true)
 }

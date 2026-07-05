@@ -8,19 +8,19 @@ func (ui *UI) configureInput() {
 	ui.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		frontPageName, _ := ui.pages.GetFrontPage()
 		switch frontPageName {
-		case "help":
+		case pageHelp:
 			switch event.Rune() {
 			case 'q':
-				ui.pages.HidePage("help")
-				ui.pages.RemovePage("help")
+				ui.pages.HidePage(pageHelp)
+				ui.pages.RemovePage(pageHelp)
 			}
-		case "downstream":
+		case pageDownstream:
 			switch event.Rune() {
 			case 'q':
-				ui.pages.HidePage("downstream")
-				ui.pages.RemovePage("downstream")
+				ui.pages.HidePage(pageDownstream)
+				ui.pages.RemovePage(pageDownstream)
 			}
-		case "main":
+		case pageMain:
 			switch event.Rune() {
 			case 'q':
 				ui.app.Stop()

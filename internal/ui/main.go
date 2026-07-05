@@ -18,7 +18,7 @@ func (ui *UI) Init(cmd *cli.Command, appConfig config.AppConfig, kubeConfigs []a
 	ui.activeConfig = activeConfig
 
 	ui.configureInput()
-	ui.pages.AddPage("main", ui.appPage(), true, true)
+	ui.pages.AddPage(pageMain, ui.appPage(), true, true)
 	ui.createAppMain()
 	return nil
 }

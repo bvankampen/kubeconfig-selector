@@ -2,11 +2,11 @@ package selector
 
 import (
 	"github.com/bvankampen/kubeconfig-selector/internal/config"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v3"
 )
 
 type Selector struct {
-	ctx       *cli.Context
+	cmd       *cli.Command
 	appConfig config.AppConfig
 	debug     bool
 }

@@ -4,15 +4,15 @@ import (
 	"github.com/bvankampen/kubeconfig-selector/internal/config"
 	"github.com/bvankampen/kubeconfig-selector/internal/kubeconfig"
 	"github.com/rivo/tview"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v3"
 )
 
-func (ui *UI) Init(ctx *cli.Context, appConfig config.AppConfig, debug bool) error {
+func (ui *UI) Init(cmd *cli.Command, appConfig config.AppConfig, debug bool) error {
 	kubeConfigs, activeConfig, err := kubeconfig.LoadKubeConfigs(appConfig)
 	if err != nil {
 		return err
 	}
-	ui.ctx = ctx
+	ui.cmd = cmd
 	ui.debug = debug
 	ui.app = tview.NewApplication()
 	ui.pages = tview.NewPages()

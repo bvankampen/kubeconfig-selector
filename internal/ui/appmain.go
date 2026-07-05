@@ -22,6 +22,7 @@ func addtoTable(table *tview.Table, field string, value string) {
 
 type listEntry struct {
 	name         string
+	sourceFile   string
 	prefixSymbol rune
 }
 
@@ -46,7 +47,7 @@ func (ui *UI) buildSortedEntries() []listEntry {
 				}
 			}
 
-			entries = append(entries, listEntry{name: name, prefixSymbol: prefixSymbol})
+			entries = append(entries, listEntry{name: name, sourceFile: cfgContext.LocationOfOrigin, prefixSymbol: prefixSymbol})
 		}
 	}
 
@@ -64,7 +65,8 @@ func (ui *UI) createList() int {
 	ui.list.SetBorder(true).SetTitle("Context").SetBorderColor(tcell.ColorBlue)
 	ui.list.SetHighlightFullLine(true)
 
-	for _, entry := range ui.buildSortedEntries() {
+	ui.listEntries = ui.buildSortedEntries()
+	for _, entry := range ui.listEntries {
 		ui.list.AddItem(entry.name, "", entry.prefixSymbol, nil)
 
 		if ui.activeConfig.CurrentContext != "" {
@@ -103,7 +105,8 @@ func (ui *UI) redrawList() {
 	currentIndex := 0
 	ui.list.Clear()
 
-	for _, entry := range ui.buildSortedEntries() {
+	ui.listEntries = ui.buildSortedEntries()
+	for _, entry := range ui.listEntries {
 		ui.list.AddItem(entry.name, "", entry.prefixSymbol, nil)
 
 		if ui.activeConfig.CurrentContext != "" {
@@ -146,24 +149,29 @@ func (ui *UI) selectKubeConfig(index int) {
 }
 
 func (ui *UI) deleteConfigByIndex(index int) {
-	contextName, _ := ui.list.GetItemText(index)
+	if index >= len(ui.listEntries) {
+		return
+	}
+	entry := ui.listEntries[index]
 	for i, config := range ui.kubeConfigs {
-		if _, ok := config.Contexts[contextName]; ok {
-			ui.kubeConfigs = append(ui.kubeConfigs[:i], ui.kubeConfigs[i+1:]...)
-			return
+		if ctx, ok := config.Contexts[entry.name]; ok {
+			if ctx.LocationOfOrigin == entry.sourceFile {
+				ui.kubeConfigs = append(ui.kubeConfigs[:i], ui.kubeConfigs[i+1:]...)
+				return
+			}
 		}
 	}
 }
 
 func (ui *UI) getConfigByIndex(index int) (string, api.Config, *api.Context) {
-	if ui.list.GetItemCount() == 0 {
+	if index >= len(ui.listEntries) {
 		return "", api.Config{}, &api.Context{}
 	}
-	contextName, _ := ui.list.GetItemText(index)
+	entry := ui.listEntries[index]
 	for _, config := range ui.kubeConfigs {
-		for name, context := range config.Contexts {
-			if name == contextName {
-				return name, config, context
+		if ctx, ok := config.Contexts[entry.name]; ok {
+			if ctx.LocationOfOrigin == entry.sourceFile {
+				return entry.name, config, ctx
 			}
 		}
 	}

@@ -31,4 +31,5 @@ type UI struct {
 	activeConfig api.Config
 	appConfig    config.AppConfig
 	debugView    *tview.TextView
+	listEntries  []listEntry
 }

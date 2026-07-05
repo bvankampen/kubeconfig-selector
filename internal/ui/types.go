@@ -3,7 +3,7 @@ package ui
 import (
 	"github.com/bvankampen/kubeconfig-selector/internal/config"
 	"github.com/rivo/tview"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v3"
 	"k8s.io/client-go/tools/clientcmd/api"
 )
 
@@ -20,7 +20,7 @@ type ConfigList struct {
 }
 
 type UI struct {
-	ctx          *cli.Context
+	cmd          *cli.Command
 	debug        bool
 	app          *tview.Application
 	list         *tview.List
@@ -31,4 +31,5 @@ type UI struct {
 	activeConfig api.Config
 	appConfig    config.AppConfig
 	debugView    *tview.TextView
+	listEntries  []listEntry
 }

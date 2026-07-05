@@ -2,3 +2,4 @@ bin/**
 ks
 
 dist/
+/.idea/

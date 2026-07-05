@@ -3,28 +3,30 @@ package selector
 import (
 	"github.com/bvankampen/kubeconfig-selector/internal/config"
 	"github.com/bvankampen/kubeconfig-selector/internal/ui"
-	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v3"
 )
 
-func New(ctx cli.Context) (*Selector, error) {
-	appconfig := config.LoadAppConfig()
+func New(cmd *cli.Command) (*Selector, error) {
+	appconfig, err := config.LoadAppConfig()
+	if err != nil {
+		return nil, err
+	}
 
-	config.WriteAppConfig(appconfig) // Write appconfig to update new values.
+	if err := config.WriteAppConfig(appconfig); err != nil {
+		return nil, err
+	}
 
 	return &Selector{
-		ctx:       &ctx,
+		cmd:       cmd,
 		appConfig: *appconfig,
-		debug:     ctx.GlobalBool("debug"),
+		debug:     cmd.Bool("debug"),
 	}, nil
 }
 
 func (s *Selector) Run() error {
 	var ui ui.UI
-	ui.Init(s.ctx, s.appConfig, s.debug)
-	err := ui.Run()
-	if err != nil {
-		logrus.Panicf("Error: %v", err)
+	if err := ui.Init(s.cmd, s.appConfig, s.debug); err != nil {
+		return err
 	}
-	return nil
+	return ui.Run()
 }

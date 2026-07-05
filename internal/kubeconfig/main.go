@@ -14,17 +14,17 @@ import (
 )
 
 const (
-	MARK    = "# Written by rs"
+	MARK    = "# Written by ks"
 	RANCHER = "rancher"
 )
 
-func loadActiveKubeConfig(dir string, file string) api.Config {
+func loadActiveKubeConfig(dir string, file string) (api.Config, error) {
 	dir, _ = homedir.Expand(dir)
 	config, err := clientcmd.LoadFromFile(filepath.Join(dir, file))
 	if err != nil {
-		return api.Config{}
+		return api.Config{}, err
 	}
-	return *config
+	return *config, nil
 }
 
 func loadKubeConfig(dir string, file string, rancherFix bool) (api.Config, error) {
@@ -78,20 +78,23 @@ func loadKubeConfigsFromDirectory(dir string, rancherFix bool) []api.Config {
 	return apiConfigs
 }
 
-func LoadKubeConfigs(appconfig config.AppConfig) ([]api.Config, api.Config) {
+func LoadKubeConfigs(appconfig config.AppConfig) ([]api.Config, api.Config, error) {
 	kubeConfigDir, _ := homedir.Expand(appconfig.KubeconfigDir)
 	_, err := os.ReadDir(kubeConfigDir)
 	if err != nil {
-		logrus.Fatalf("Error reading kubeconfig directory: %s (%v)", kubeConfigDir, err)
+		return nil, api.Config{}, err
 	}
 	apiConfigs := loadKubeConfigsFromDirectory(appconfig.KubeconfigDir, false)
 	for _, dir := range appconfig.ExtraKubeconfigDirs {
 		apiConfigs = append(apiConfigs, loadKubeConfigsFromDirectory(dir, appconfig.RancherFix)...)
 	}
 
-	activeConfig := loadActiveKubeConfig(appconfig.KubeconfigDir, appconfig.KubeconfigFile)
+	activeConfig, err := loadActiveKubeConfig(appconfig.KubeconfigDir, appconfig.KubeconfigFile)
+	if err != nil {
+		return nil, api.Config{}, err
+	}
 
-	return apiConfigs, activeConfig
+	return apiConfigs, activeConfig, nil
 }
 
 func markKubeConfig(path string) {
@@ -118,11 +121,23 @@ func SaveKubeConfig(config *api.Config, context string, dir string, file string,
 	config.CurrentContext = context
 	if createLink {
 		kubeConfigLocation := config.Contexts[context].LocationOfOrigin
+
+		if isMove {
+			newPath := filepath.Join(dir, filepath.Base(kubeConfigLocation))
+			err := os.Rename(kubeConfigLocation, newPath)
+			if err != nil {
+				return errors.New("Unable to move " + kubeConfigLocation + " to " + newPath + ": " + err.Error())
+			}
+			os.Chmod(newPath, 0o600)
+			kubeConfigLocation = newPath
+		}
+
 		err := clientcmd.WriteToFile(*config, kubeConfigLocation)
 		if err != nil {
-			return errors.New("Unable to write " + path + " Error: " + err.Error())
+			return errors.New("Unable to write " + kubeConfigLocation + ": " + err.Error())
 		}
 		os.Chmod(kubeConfigLocation, 0o600)
+
 		_, err = os.Stat(path)
 		if err == nil {
 			fileInfo, _ := os.Lstat(path)
@@ -132,21 +147,18 @@ func SaveKubeConfig(config *api.Config, context string, dir string, file string,
 				return errors.New("File: " + path + " is not a symlink, please remove/rename this file first.")
 			}
 		}
-		if isMove {
-			// is kubeconfig is moved, then use new location instead of original location
-			kubeConfigLocation = filepath.Join(dir, filepath.Base(kubeConfigLocation))
-		}
+
 		err = os.Symlink(kubeConfigLocation, path)
 		if err != nil {
 			os.Remove(path)
 			err = os.Symlink(kubeConfigLocation, path)
 			if err != nil {
-				return errors.New("Unable to create Symlink " + kubeConfigLocation + "->" + path + "Error: " + err.Error())
+				return errors.New("Unable to create Symlink " + kubeConfigLocation + " -> " + path + ": " + err.Error())
 			}
 		}
 	} else {
 		if !checkMark(path) && doCheckMark {
-			return errors.New("Kubeconfig (" + path + ") is not managed by rs. Remove/rename this file first.")
+			return errors.New("Kubeconfig (" + path + ") is not managed by ks. Remove/rename this file first.")
 		}
 		err := clientcmd.WriteToFile(*config, path)
 		if err != nil {
@@ -185,9 +197,13 @@ func DeleteKubeConfig(config *api.Config, context string, dir string, file strin
 	if createLink && activeContext {
 		dir, _ = homedir.Expand(dir)
 		path := filepath.Join(dir, file)
-		os.Remove(path)
+		if err := os.Remove(path); err != nil {
+			logrus.Errorf("Error removing symlink %s: %v", path, err)
+		}
 	}
 	originalKubeConfigLocation := config.Contexts[context].LocationOfOrigin
-	os.Remove(originalKubeConfigLocation)
+	if err := os.Remove(originalKubeConfigLocation); err != nil {
+		return err
+	}
 	return nil
 }

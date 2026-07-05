@@ -38,15 +38,15 @@ func (ui *UI) configureInput() {
 				ui.deleteCurrentItem()
 			case 'm':
 				ui.moveKubeConfig()
-		case 'x':
-			ui.showDownstreamClusters()
-			return nil
-		case '?':
-			ui.help()
-		}
-		if event.Key() == tcell.KeyF5 {
-			ui.redrawLists()
-		}
+			case 'x':
+				ui.showDownstreamClusters()
+				return nil
+			case '?':
+				ui.help()
+			}
+			if event.Key() == tcell.KeyF5 {
+				ui.redrawLists()
+			}
 		}
 		return event
 	})

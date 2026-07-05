@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/mitchellh/go-homedir"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
@@ -32,36 +31,41 @@ type AppConfig struct {
 	RancherFix          bool     `yaml:"rancherFix"`
 }
 
-func LoadAppConfig() *AppConfig {
+func LoadAppConfig() (*AppConfig, error) {
 	filename, _ := homedir.Expand(appConfigFilename)
 
 	appconfig := AppConfig{}
 
 	if _, err := os.Stat(filename); errors.Is(err, os.ErrNotExist) {
 		appconfig = defaultConf
-		data, _ := yaml.Marshal(appconfig)
-		err := os.WriteFile(filename, data, 0o600)
+		data, err := yaml.Marshal(appconfig)
 		if err != nil {
-			logrus.Errorf("Unable to write configfile: %v", err)
+			return nil, fmt.Errorf("unable to marshal default config: %w", err)
+		}
+		if err := os.WriteFile(filename, data, 0o600); err != nil {
+			return nil, fmt.Errorf("unable to write configfile: %w", err)
 		}
 	} else {
 		yamlConfig, err := os.ReadFile(filename)
 		if err != nil {
-			fmt.Println(err.Error())
+			return nil, fmt.Errorf("unable to read configfile: %w", err)
 		}
 		err = yaml.Unmarshal(yamlConfig, &appconfig)
 		if err != nil {
-			logrus.Errorf("Unable to load configfile: %v", err)
+			return nil, fmt.Errorf("unable to load configfile: %w", err)
 		}
 	}
-	return &appconfig
+	return &appconfig, nil
 }
 
-func WriteAppConfig(appconfig *AppConfig) {
+func WriteAppConfig(appconfig *AppConfig) error {
 	filename, _ := homedir.Expand(appConfigFilename)
-	data, _ := yaml.Marshal(appconfig)
-	err := os.WriteFile(filename, data, 0o600)
+	data, err := yaml.Marshal(appconfig)
 	if err != nil {
-		logrus.Errorf("Unable to write configfile: %v", err)
+		return fmt.Errorf("unable to marshal config: %w", err)
 	}
+	if err := os.WriteFile(filename, data, 0o600); err != nil {
+		return fmt.Errorf("unable to write configfile: %w", err)
+	}
+	return nil
 }

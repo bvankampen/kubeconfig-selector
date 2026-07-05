@@ -1,28 +1,24 @@
 package ui
 
 import (
-	b64 "encoding/base64"
-
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 func redactConfigToString(config api.Config) string {
-	redacted, _ := b64.StdEncoding.DecodeString("REDACTED")
+	redactedString := "REDACTED"
+
 	for _, cluster := range config.Clusters {
-		if len(cluster.CertificateAuthorityData) > 0 {
-			cluster.CertificateAuthorityData = redacted
-		}
+		cluster.CertificateAuthorityData = nil
 	}
 	for _, authInfo := range config.AuthInfos {
-		if len(authInfo.ClientCertificateData) > 0 {
-			authInfo.ClientCertificateData = redacted
+		authInfo.ClientCertificateData = nil
+		authInfo.ClientKeyData = nil
+		if authInfo.Token != "" {
+			authInfo.Token = redactedString
 		}
-		if len(authInfo.ClientKeyData) > 0 {
-			authInfo.ClientKeyData = redacted
-		}
-		if len(authInfo.Token) > 0 {
-			authInfo.Token = "REDACTED"
+		if authInfo.Password != "" {
+			authInfo.Password = redactedString
 		}
 	}
 	configBytes, _ := clientcmd.Write(config)

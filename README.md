@@ -1,6 +1,8 @@
-## Simple Kubernetes Kubeconfig Cluster Selector
+## kubeconfig-selector
 
 ![Screenshot](docs/ks.png)
+
+### Version: v1.7.0
 
 ### Requirements:
 
@@ -10,7 +12,7 @@
 
 ```
 NAME:
-   cluster - Select kubeconfig
+   ks - Select kubeconfig
 
 USAGE:
    ks [global options] command [command options] [arguments...]
@@ -48,6 +50,8 @@ createLink: true
 rancherFix: true
 ```
 
+**Note:** On Windows, `createLink: true` requires either running as Administrator or having Developer Mode enabled, because `os.Symlink` needs elevated privileges. If this is not available, set `createLink: false` to use copy mode instead.
+
 ### Keybindings:
 
 | Key | Action |
@@ -79,7 +83,10 @@ For mitigating these issues:
 - https://github.com/rancher/rancher/issues/55031
 - https://github.com/rancher/rancher/issues/55034
 
-set configuration variable `rancherFix` to `true`
+set configuration variable `rancherFix` to `true`.
+
+**Note:** `rancherFix` only applies to files in `extraKubeconfigDirs` — kubeconfig files
+in the primary `kubeconfigDir` (`~/.kube`) are not affected.
 
 ### Note:
 

@@ -1,12 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/bvankampen/kubeconfig-selector/internal/selector"
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v3"
 )
 
 var (
@@ -15,35 +16,33 @@ var (
 )
 
 func main() {
-	app := cli.NewApp()
-	app.Name = "cluster"
-	app.Version = fmt.Sprintf("%s (%s)", Version, CommitId)
-	app.Usage = "Select kubeconfig"
-	app.Before = func(ctx *cli.Context) error {
-		if ctx.GlobalBool("debug") {
-			logrus.SetLevel(logrus.DebugLevel)
-		}
-		return nil
-	}
-	app.Flags = []cli.Flag{
-		&cli.BoolFlag{
-			Name:  "debug",
-			Usage: "Enable debug",
+	cmd := &cli.Command{
+		Name:    "ks",
+		Version: fmt.Sprintf("%s (%s)", Version, CommitId),
+		Usage:   "Select kubeconfig",
+		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+			if cmd.Bool("debug") {
+				logrus.SetLevel(logrus.DebugLevel)
+			}
+			return ctx, nil
 		},
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:  "debug",
+				Usage: "Enable debug",
+			},
+		},
+		Action: run,
 	}
-	app.Action = run
-	if err := app.Run(os.Args); err != nil {
+	if err := cmd.Run(context.Background(), os.Args); err != nil {
 		logrus.Fatal(err)
 	}
 }
 
-func run(ctx *cli.Context) {
-	s, err := selector.New(*ctx)
+func run(ctx context.Context, cmd *cli.Command) error {
+	s, err := selector.New(cmd)
 	if err != nil {
-		logrus.Fatal(err)
+		return err
 	}
-	err = s.Run()
-	if err != nil {
-		logrus.Fatal(err)
-	}
+	return s.Run()
 }

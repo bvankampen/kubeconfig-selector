@@ -7,7 +7,7 @@ import (
 
 func (ui *UI) getHelpText() string {
 	return "KS Help \n" +
-		"Kubernetes Selector (ks) Version " + ui.ctx.App.Version + "\n\n" +
+		"Kubeconfig Selector (ks) Version " + ui.cmd.Version + "\n\n" +
 		"  [yellow]q:[white]       Quit \n" +
 		"  [yellow]<enter>:[white] Use Kubeconfig \n" +
 		"  [yellow]m:[white]       Move Kubeconfig to " + ui.appConfig.KubeconfigDir + " and use it " + "\n" +

@@ -32,7 +32,7 @@ func createFooter(kubeconfigDir string) *tview.TextView {
 func (ui *UI) appPage() *tview.Flex {
 	ui.mainFlex = tview.NewFlex()
 	flex := tview.NewFlex().SetDirection(tview.FlexRow)
-	flex.AddItem(createHeader(ui.ctx.App.Version), 1, 1, false)
+	flex.AddItem(createHeader(ui.cmd.Version), 1, 1, false)
 	flex.AddItem(ui.mainFlex, 0, 1, true)
 	flex.AddItem(createFooter(ui.appConfig.KubeconfigDir), 1, 1, false)
 

@@ -245,7 +245,6 @@ func (ui *UI) redrawAppMain() {
 func (ui *UI) redrawLists() {
 	ui.ReloadKubeConfigs()
 	ui.redrawList()
-	ui.list.SetCurrentItem(0)
 }
 
 func (ui *UI) moveKubeConfig() {

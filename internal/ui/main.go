@@ -7,8 +7,11 @@ import (
 	"github.com/urfave/cli"
 )
 
-func (ui *UI) Init(ctx *cli.Context, appConfig config.AppConfig, debug bool) {
-	kubeConfigs, activeConfig := kubeconfig.LoadKubeConfigs(appConfig)
+func (ui *UI) Init(ctx *cli.Context, appConfig config.AppConfig, debug bool) error {
+	kubeConfigs, activeConfig, err := kubeconfig.LoadKubeConfigs(appConfig)
+	if err != nil {
+		return err
+	}
 	ui.ctx = ctx
 	ui.debug = debug
 	ui.app = tview.NewApplication()
@@ -20,12 +23,17 @@ func (ui *UI) Init(ctx *cli.Context, appConfig config.AppConfig, debug bool) {
 	ui.configureInput()
 	ui.pages.AddPage("main", ui.appPage(), true, true)
 	ui.createAppMain()
+	return nil
 }
 
-func (ui *UI) ReloadKubeConfigs() {
-	kubeConfigs, activeConfig := kubeconfig.LoadKubeConfigs(ui.appConfig)
+func (ui *UI) ReloadKubeConfigs() error {
+	kubeConfigs, activeConfig, err := kubeconfig.LoadKubeConfigs(ui.appConfig)
+	if err != nil {
+		return err
+	}
 	ui.kubeConfigs = kubeConfigs
 	ui.activeConfig = activeConfig
+	return nil
 }
 
 func (ui *UI) Run() error {

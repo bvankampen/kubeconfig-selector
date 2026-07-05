@@ -21,7 +21,9 @@ func New(ctx cli.Context) (*Selector, error) {
 
 func (s *Selector) Run() error {
 	var ui ui.UI
-	ui.Init(s.ctx, s.appConfig, s.debug)
+	if err := ui.Init(s.ctx, s.appConfig, s.debug); err != nil {
+		return err
+	}
 	err := ui.Run()
 	if err != nil {
 		logrus.Panicf("Error: %v", err)

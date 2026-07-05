@@ -78,11 +78,11 @@ func loadKubeConfigsFromDirectory(dir string, rancherFix bool) []api.Config {
 	return apiConfigs
 }
 
-func LoadKubeConfigs(appconfig config.AppConfig) ([]api.Config, api.Config) {
+func LoadKubeConfigs(appconfig config.AppConfig) ([]api.Config, api.Config, error) {
 	kubeConfigDir, _ := homedir.Expand(appconfig.KubeconfigDir)
 	_, err := os.ReadDir(kubeConfigDir)
 	if err != nil {
-		logrus.Fatalf("Error reading kubeconfig directory: %s (%v)", kubeConfigDir, err)
+		return nil, api.Config{}, err
 	}
 	apiConfigs := loadKubeConfigsFromDirectory(appconfig.KubeconfigDir, false)
 	for _, dir := range appconfig.ExtraKubeconfigDirs {
@@ -91,7 +91,7 @@ func LoadKubeConfigs(appconfig config.AppConfig) ([]api.Config, api.Config) {
 
 	activeConfig := loadActiveKubeConfig(appconfig.KubeconfigDir, appconfig.KubeconfigFile)
 
-	return apiConfigs, activeConfig
+	return apiConfigs, activeConfig, nil
 }
 
 func markKubeConfig(path string) {

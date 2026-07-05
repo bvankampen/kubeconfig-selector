@@ -243,7 +243,10 @@ func (ui *UI) redrawAppMain() {
 }
 
 func (ui *UI) redrawLists() {
-	ui.ReloadKubeConfigs()
+	if err := ui.ReloadKubeConfigs(); err != nil {
+		ui.ErrorMessage(fmt.Sprintf("Error reloading kubeconfigs: %v", err))
+		return
+	}
 	ui.redrawList()
 }
 

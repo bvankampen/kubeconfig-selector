@@ -45,6 +45,9 @@ func loadActiveKubeConfig(dir string, file string) (api.Config, error) {
 	if err := removeBrokenSymlink(path); err != nil {
 		return api.Config{}, err
 	}
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return api.Config{}, nil
+	}
 	config, err := clientcmd.LoadFromFile(path)
 	if err != nil {
 		return api.Config{}, err

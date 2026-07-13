@@ -21,6 +21,9 @@ const (
 func removeBrokenSymlink(path string) error {
 	fi, err := os.Lstat(path)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
 		return err
 	}
 	if fi.Mode()&os.ModeSymlink == 0 {

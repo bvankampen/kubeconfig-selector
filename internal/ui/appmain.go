@@ -151,7 +151,7 @@ func (ui *UI) moveKubeConfig() {
 }
 
 func (ui *UI) renameKubeConfigContext(config api.Config, contextName string, newContextName string) {
-	err := selector.RenameContext(ui.kubeConfigs, config, contextName, newContextName)
+	err := selector.RenameContext(ui.kubeConfigs, config, contextName, newContextName, ui.appConfig.KubeconfigDir, ui.appConfig.KubeconfigFile, ui.appConfig.CreateLink)
 	if err != nil {
 		ui.ErrorMessage(err.Error())
 		return

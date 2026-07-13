@@ -18,9 +18,31 @@ const (
 	RANCHER = "rancher"
 )
 
+func removeBrokenSymlink(path string) error {
+	fi, err := os.Lstat(path)
+	if err != nil {
+		return err
+	}
+	if fi.Mode()&os.ModeSymlink == 0 {
+		return nil
+	}
+	_, err = os.Stat(path)
+	if err == nil {
+		return nil
+	}
+	if os.IsNotExist(err) {
+		return os.Remove(path)
+	}
+	return err
+}
+
 func loadActiveKubeConfig(dir string, file string) (api.Config, error) {
 	dir, _ = homedir.Expand(dir)
-	config, err := clientcmd.LoadFromFile(filepath.Join(dir, file))
+	path := filepath.Join(dir, file)
+	if err := removeBrokenSymlink(path); err != nil {
+		return api.Config{}, err
+	}
+	config, err := clientcmd.LoadFromFile(path)
 	if err != nil {
 		return api.Config{}, err
 	}

@@ -141,7 +141,7 @@ func DeleteConfig(kubeConfigs []api.Config, listEntries []ListEntry, index int, 
 		activeContext)
 }
 
-func RenameContext(kubeConfigs []api.Config, config api.Config, contextName string, newContextName string) error {
+func RenameContext(kubeConfigs []api.Config, config api.Config, contextName string, newContextName string, kubeconfigDir string, kubeconfigFile string, createLink bool) error {
 	if contextName == newContextName {
 		return nil
 	}
@@ -176,6 +176,18 @@ func RenameContext(kubeConfigs []api.Config, config api.Config, contextName stri
 				return err
 			}
 			context.LocationOfOrigin = newPath
+
+			if createLink {
+				activePath, _ := homedir.Expand(filepath.Join(kubeconfigDir, kubeconfigFile))
+				fi, err := os.Lstat(activePath)
+				if err == nil && fi.Mode()&os.ModeSymlink != 0 {
+					linkTarget, err := os.Readlink(activePath)
+					if err == nil && linkTarget == oldPath {
+						os.Remove(activePath)
+						os.Symlink(newPath, activePath)
+					}
+				}
+			}
 
 			for i, cfg := range kubeConfigs {
 				for n := range cfg.Contexts {

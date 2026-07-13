@@ -203,8 +203,8 @@ func RenameContext(kubeConfigs []api.Config, config api.Config, contextName stri
 	return nil
 }
 
-func DownloadDownstreamKubeConfig(server, token string, cluster rancher.DownstreamCluster, kubeconfigDir string) error {
-	data, err := rancher.FetchClusterKubeConfig(server, token, cluster.ID)
+func DownloadDownstreamKubeConfig(server, token string, cluster rancher.DownstreamCluster, kubeconfigDir string, insecure bool) error {
+	data, err := rancher.FetchClusterKubeConfig(server, token, cluster.ID, insecure)
 	if err != nil {
 		return err
 	}

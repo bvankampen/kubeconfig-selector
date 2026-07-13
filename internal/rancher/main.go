@@ -1,6 +1,7 @@
 package rancher
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,6 +11,24 @@ import (
 )
 
 const requestTimeout = 10 * time.Second
+
+func IsCertError(err error) bool {
+	msg := err.Error()
+	return strings.Contains(msg, "certificate") ||
+		strings.Contains(msg, "x509")
+}
+
+func newHTTPClient(insecure bool) *http.Client {
+	if insecure {
+		return &http.Client{
+			Timeout: requestTimeout,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			},
+		}
+	}
+	return &http.Client{Timeout: requestTimeout}
+}
 
 type DownstreamCluster struct {
 	ID   string
@@ -23,8 +42,8 @@ type rancherClustersResponse struct {
 	} `json:"data"`
 }
 
-func FetchDownstreamClusters(server, token string) ([]DownstreamCluster, error) {
-	client := &http.Client{Timeout: requestTimeout}
+func FetchDownstreamClusters(server, token string, insecure bool) ([]DownstreamCluster, error) {
+	client := newHTTPClient(insecure)
 
 	req, err := http.NewRequest("GET", strings.TrimRight(server, "/")+"/v3/clusters", nil)
 	if err != nil {
@@ -55,8 +74,8 @@ func FetchDownstreamClusters(server, token string) ([]DownstreamCluster, error) 
 	return clusters, nil
 }
 
-func FetchClusterKubeConfig(server, token, clusterID string) ([]byte, error) {
-	client := &http.Client{Timeout: requestTimeout}
+func FetchClusterKubeConfig(server, token, clusterID string, insecure bool) ([]byte, error) {
+	client := newHTTPClient(insecure)
 
 	req, err := http.NewRequest("POST", strings.TrimRight(server, "/")+"/v3/clusters/"+clusterID+"?action=generateKubeconfig", nil)
 	if err != nil {

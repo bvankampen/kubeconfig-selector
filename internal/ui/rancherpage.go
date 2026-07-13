@@ -26,12 +26,31 @@ func (ui *UI) showDownstreamClusters() {
 		return
 	}
 
-	clusters, err := rancher.FetchDownstreamClusters(server, token)
+	clusters, err := rancher.FetchDownstreamClusters(server, token, false)
 	if err != nil {
+		if rancher.IsCertError(err) {
+			ui.showCertConfirm(func(insecure bool) {
+				if !insecure {
+					ui.ShowInfoMessage(err.Error())
+					return
+				}
+				clusters, err := rancher.FetchDownstreamClusters(server, token, true)
+				if err != nil {
+					ui.ShowInfoMessage(err.Error())
+					return
+				}
+				ui.showDownList(clusters)
+			})
+			return
+		}
 		ui.ShowInfoMessage(err.Error())
 		return
 	}
 
+	ui.showDownList(clusters)
+}
+
+func (ui *UI) showDownList(clusters []rancher.DownstreamCluster) {
 	if len(clusters) == 0 {
 		ui.ShowInfoMessage("No downstream clusters found.")
 		return
@@ -57,7 +76,7 @@ func (ui *UI) showDownstreamClusters() {
 
 		for _, c := range clusters {
 			if c.Name == mainText {
-				ui.downloadDownstreamKubeConfig(server, token, c)
+				ui.downloadDownstreamKubeConfig(c)
 				return
 			}
 		}
@@ -72,9 +91,31 @@ func (ui *UI) showDownstreamClusters() {
 	ui.pages.AddPage(pageDownstream, list, false, true)
 }
 
-func (ui *UI) downloadDownstreamKubeConfig(server, token string, cluster rancher.DownstreamCluster) {
-	err := selector.DownloadDownstreamKubeConfig(server, token, cluster, ui.appConfig.KubeconfigDir)
+func (ui *UI) downloadDownstreamKubeConfig(cluster rancher.DownstreamCluster) {
+	index := ui.list.GetCurrentItem()
+	_, config, ctx := selector.GetConfigByIndex(ui.kubeConfigs, ui.listEntries, index)
+	server := config.Clusters[ctx.Cluster].Server
+	token := config.AuthInfos[ctx.AuthInfo].Token
+
+	err := selector.DownloadDownstreamKubeConfig(server, token, cluster, ui.appConfig.KubeconfigDir, false)
 	if err != nil {
+		if rancher.IsCertError(err) {
+			ui.showCertConfirm(func(insecure bool) {
+				if !insecure {
+					ui.ErrorMessage(err.Error())
+					return
+				}
+				err := selector.DownloadDownstreamKubeConfig(server, token, cluster, ui.appConfig.KubeconfigDir, true)
+				if err != nil {
+					ui.ErrorMessage(err.Error())
+					return
+				}
+				ui.pages.HidePage(pageDownstream)
+				ui.pages.RemovePage(pageDownstream)
+				ui.redrawLists()
+			})
+			return
+		}
 		ui.ErrorMessage(err.Error())
 		return
 	}
@@ -82,4 +123,22 @@ func (ui *UI) downloadDownstreamKubeConfig(server, token string, cluster rancher
 	ui.pages.HidePage(pageDownstream)
 	ui.pages.RemovePage(pageDownstream)
 	ui.redrawLists()
+}
+
+func (ui *UI) showCertConfirm(onAccept func(bool)) {
+	modal := tview.NewModal()
+	modal.SetText("Self-signed or invalid certificate detected.\nAccept connection anyway?")
+	modal.AddButtons([]string{"Accept", "Cancel"})
+	modal.SetBackgroundColor(tcell.ColorOrange)
+	modal.SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+		ui.pages.HidePage(pageCertConfirm)
+		ui.pages.RemovePage(pageCertConfirm)
+		if buttonLabel == "Accept" {
+			onAccept(true)
+		} else {
+			onAccept(false)
+		}
+	})
+	modal.SetTitle("Certificate Error")
+	ui.pages.AddPage(pageCertConfirm, modal, false, true)
 }

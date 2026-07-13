@@ -9,13 +9,14 @@ import (
 )
 
 const (
-	pageMain       = "main"
-	pageHelp       = "help"
-	pageDelete     = "delete"
-	pageRename     = "rename"
-	pageError      = "error"
-	pageInfo       = "info"
-	pageDownstream = "downstream"
+	pageMain        = "main"
+	pageHelp        = "help"
+	pageDelete      = "delete"
+	pageRename      = "rename"
+	pageError       = "error"
+	pageInfo        = "info"
+	pageDownstream  = "downstream"
+	pageCertConfirm = "certconfirm"
 )
 
 type UI struct {
